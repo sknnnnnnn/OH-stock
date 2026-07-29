@@ -59,7 +59,7 @@
                         <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">Weekly</button>
                     </div>
 
-                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition">
+                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition" title="สลับโหมดสว่าง/มืด">
                         <span id="themeIcon">🌙</span>
                     </button>
                 </div>
@@ -116,12 +116,43 @@
 
     </main>
 
-    <!-- Firebase SDK Modular -->
+    <!-- Modal เครื่องคิดเลข -->
+    <div id="calcModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border dark:border-slate-700 p-4 w-72">
+            <div class="flex justify-between items-center mb-2 pb-1 border-b dark:border-slate-700">
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200" id="calcTitle">เครื่องคิดเลขเศษ</span>
+                <button onclick="closeCalculator()" class="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+            </div>
+            <input type="text" id="calcDisplay" readonly class="w-full bg-slate-50 dark:bg-slate-900 text-right p-2 rounded-lg text-lg font-mono mb-3 border dark:border-slate-700 text-slate-800 dark:text-slate-100" value="0">
+            <div class="grid grid-cols-4 gap-1.5 text-sm">
+                <button onclick="calcClear()" class="bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 p-2 rounded-lg font-medium">C</button>
+                <button onclick="calcAppend('/')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">÷</button>
+                <button onclick="calcAppend('*')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">×</button>
+                <button onclick="calcBack()" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">⌫</button>
+                <button onclick="calcAppend('7')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">7</button>
+                <button onclick="calcAppend('8')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">8</button>
+                <button onclick="calcAppend('9')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">9</button>
+                <button onclick="calcAppend('-')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">-</button>
+                <button onclick="calcAppend('4')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">4</button>
+                <button onclick="calcAppend('5')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">5</button>
+                <button onclick="calcAppend('6')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">6</button>
+                <button onclick="calcAppend('+')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">+</button>
+                <button onclick="calcAppend('1')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">1</button>
+                <button onclick="calcAppend('2')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">2</button>
+                <button onclick="calcAppend('3')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">3</button>
+                <button onclick="calcApply()" class="row-span-2 bg-emerald-600 text-white rounded-lg font-medium flex items-center justify-center text-xs shadow-sm">ตกลง</button>
+                <button onclick="calcAppend('0')" class="col-span-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">0</button>
+                <button onclick="calcAppend('.')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">.</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Realtime Sync Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Firebase Config (ปรับแก้ไข databaseURL ให้เป็น Region asia-southeast1 แล้ว)
+        // ตั้งค่า Firebase Config (แก้ Region เป็น asia-southeast1 เรียบร้อย)
         const firebaseConfig = {
             apiKey: "AIzaSyDRQW8NeX4P4VjDLFrjZXx8S8XOyA47I58",
             authDomain: "oj-stock-a6af4.firebaseapp.com",
@@ -141,12 +172,13 @@
         let currentMode = 'daily';
         let currentFilter = 'all';
         let selectedCategory = 'ทั้งหมด';
+        let activeInputId = null;
         let lastCompletedCount = 0;
         let stockItems = [];
 
         const statusEl = document.getElementById("syncStatus");
 
-        // คอยดึงข้อมูลจาก Firebase แบบ Realtime
+        // ฟังก์ชันติดตามข้อมูล Realtime จาก Firebase
         function listenToFirebase() {
             const stockRef = ref(db, `stock_${currentMode}`);
             onValue(stockRef, (snapshot) => {
@@ -156,7 +188,7 @@
                     statusEl.innerText = "🟢 Realtime Sync พร้อมทำงาน";
                     statusEl.className = "text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800";
                 } else {
-                    // ถ้ายังไม่มีข้อมูล ให้ดึงจาก Sheets มาลงครั้งแรก
+                    // หากยังไม่มีข้อมูลใน Firebase ให้ดึงจาก Sheets มาเริ่มต้น
                     fetchFromSheetsAndSyncFirebase(true);
                 }
                 renderCategories();
@@ -168,11 +200,11 @@
             });
         }
 
-        // ดึงรายการจาก Google Sheets มาอัปเดตลง Firebase
+        // ดึงจาก Google Sheets ลง Firebase Realtime
         window.fetchFromSheetsAndSyncFirebase = async function(isInitial = false) {
-            if (!isInitial && !confirm("🔄 ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่?")) return;
+            if (!isInitial && !confirm("🔄 ต้องการอัปเดตรายการสินค้าจาก Google Sheets ใช่หรือไม่?")) return;
 
-            statusEl.innerText = "🔄 กำลังดึงจาก Sheets...";
+            statusEl.innerText = "🔄 กำลังดึงข้อมูลจาก Sheets...";
             try {
                 const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
                 const rawData = await response.json();
@@ -185,7 +217,7 @@
                     });
                     
                     await set(ref(db, `stock_${currentMode}`), formattedData);
-                    alert("✅ อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อย!");
+                    if (!isInitial) alert("✅ อัปเดตรายการสินค้าจาก Sheets เรียบร้อยแล้ว!");
                 }
             } catch (err) {
                 console.error(err);
@@ -241,6 +273,7 @@
 
         function updateProgressAndUI() {
             if (stockItems.length === 0) return;
+
             const total = stockItems.length;
             const completed = stockItems.filter(i => getStatusType(i) === 'done').length;
             const pending = total - completed;
@@ -328,7 +361,10 @@
                     badgeText = '✅ นับเสร็จแล้ว';
                 }
 
-                let typeLabel = cleanType === 'frac' ? "นับเศษ" : cleanType === 'frac2' ? "นับเศษ (2 ช่อง)" : "นับเต็มและเศษ";
+                let typeLabel = "นับจำนวนเต็ม";
+                if (cleanType === 'frac') typeLabel = "นับเศษ";
+                else if (cleanType === 'frac2') typeLabel = "นับเศษ (2 ช่อง)";
+                else typeLabel = "นับเต็มและเศษ";
 
                 const card = document.createElement("div");
                 card.id = `card_${originalIdx}`;
@@ -353,17 +389,23 @@
                     <div class="grid grid-cols-3 gap-2 mb-2">
                         <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">จำนวนเต็ม</span>
-                            <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                            <input type="number" id="f_${originalIdx}" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
                         
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษปกติ</span>
-                            <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                            <div class="flex items-center">
+                                <input type="number" id="f1_${originalIdx}" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none pr-7" placeholder="0">
+                                <button onclick="openCalculator('f1_${originalIdx}', 'เศษปกติ: ${item.name}')" class="absolute right-1 bottom-1 text-slate-400 hover:text-emerald-600 p-1 text-xs z-10">🧮</button>
+                            </div>
                         </div>
 
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษกระปุก</span>
-                            <input type="number" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                            <div class="flex items-center">
+                                <input type="number" id="f2_${originalIdx}" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none pr-7" placeholder="0">
+                                <button onclick="openCalculator('f2_${originalIdx}', 'เศษกระปุก: ${item.name}')" class="absolute right-1 bottom-1 text-slate-400 hover:text-emerald-600 p-1 text-xs z-10">🧮</button>
+                            </div>
                         </div>
                     </div>
 
@@ -379,7 +421,7 @@
                         
                         <div class="flex items-center gap-3 text-[11px] flex-wrap">
                             <span class="text-slate-400 font-mono">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
-                            <span class="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-100/70 dark:bg-emerald-900/40 px-2.5 py-1 rounded-md border border-emerald-200 font-mono">
+                            <span id="summary_${originalIdx}" class="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-100/70 dark:bg-emerald-900/40 px-2.5 py-1 rounded-md border border-emerald-200 font-mono">
                                 ( เต็ม : ${fFullVal} | เศษรวม : ${totalFrac} )
                             </span>
                         </div>
@@ -389,7 +431,7 @@
             });
         };
 
-        // ยิงอัปเดตไปที่ Firebase ทันทีที่กรอกข้อมูล
+        // ส่งข้อมูลที่เปลี่ยนขึ้น Firebase Realtime ทันที
         window.updateFirebaseInput = function(idx, field, val) {
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today/${field}`] = val;
@@ -400,8 +442,8 @@
             const item = stockItems[idx];
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today`] = {
-                full: item.yst.full,
-                frac1: item.yst.frac,
+                full: item.yst?.full ?? 0,
+                frac1: item.yst?.frac ?? 0,
                 frac2: 0
             };
             update(ref(db), updates);
@@ -420,7 +462,7 @@
         };
 
         window.startNewDay = function() {
-            if (confirm("🌅 ต้องการเริ่มรอบวันใหม่ใช่หรือไม่?\n(ค่ายอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวานบน Firebase)")) {
+            if (confirm("🌅 ต้องการเริ่มรอบวันใหม่ใช่หรือไม่?\n(ค่ายอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวานบนระบบ Realtime)")) {
                 const newItems = stockItems.map(item => {
                     item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
                     item.today = { full: "", frac1: "", frac2: "" };
@@ -433,11 +475,11 @@
         window.submitToGoogleSheets = async function() {
             const completedItems = stockItems.filter(item => getStatusType(item) === 'done');
             if (completedItems.length === 0) {
-                alert("⚠️ ยังไม่มีรายการที่นับเสร็จแล้ว");
+                alert("⚠️ ยังไม่มีรายการที่นับเสร็จแล้ว กรุณานับให้อย่างน้อย 1 รายการก่อนส่งข้อมูล");
                 return;
             }
 
-            if (!confirm(`📤 ต้องการส่งข้อมูล ${completedItems.length} รายการ ไปยัง Google Sheets ใช่หรือไม่?`)) return;
+            if (!confirm(`📤 ต้องการส่งข้อมูลจำนวน ${completedItems.length} รายการ ไปยัง Google Sheets ใช่หรือไม่?`)) return;
 
             try {
                 await fetch(WEB_APP_URL, {
@@ -446,7 +488,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ mode: currentMode, items: completedItems })
                 });
-                alert(`✅ ส่งข้อมูลเรียบร้อยแล้ว!`);
+                alert(`✅ ส่งข้อมูลจำนวน ${completedItems.length} รายการ ไปยัง Google Sheets เรียบร้อยแล้ว!`);
             } catch (error) {
                 alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล");
             }
@@ -462,7 +504,45 @@
             }
         };
 
-        // เริ่มต้นเชื่อมต่อ Firebase
+        // เครื่องคิดเลข
+        window.openCalculator = function(inputId, titleText) {
+            activeInputId = inputId;
+            document.getElementById("calcTitle").innerText = titleText;
+            window.calcValue = document.getElementById(inputId).value || "0";
+            document.getElementById("calcDisplay").value = window.calcValue;
+            document.getElementById("calcModal").classList.remove("hidden");
+        };
+
+        window.closeCalculator = function() {
+            document.getElementById("calcModal").classList.add("hidden");
+            activeInputId = null;
+        };
+
+        window.calcValue = "0";
+        window.calcAppend = function(val) {
+            window.calcValue = window.calcValue === "0" && !isNaN(val) ? val : window.calcValue + val;
+            document.getElementById("calcDisplay").value = window.calcValue;
+        };
+        window.calcClear = function() { window.calcValue = "0"; document.getElementById("calcDisplay").value = "0"; };
+        window.calcBack = function() { window.calcValue = window.calcValue.slice(0, -1) || "0"; document.getElementById("calcDisplay").value = window.calcValue; };
+        window.calcApply = function() {
+            try { 
+                const result = eval(window.calcValue).toString();
+                if (activeInputId) {
+                    const inputEl = document.getElementById(activeInputId);
+                    inputEl.value = result;
+                    
+                    // แยกดึง index และ field แล้วส่งเข้า Firebase
+                    const parts = activeInputId.split('_');
+                    const fieldType = parts[0] === 'f1' ? 'frac1' : 'frac2';
+                    const idx = parseInt(parts[1]);
+                    window.updateFirebaseInput(idx, fieldType, result);
+                }
+                closeCalculator();
+            } catch(e) { document.getElementById("calcDisplay").value = "Error"; window.calcValue = "0"; }
+        };
+
+        // เริ่มต้นฟังการอัปเดต Realtime
         listenToFirebase();
     </script>
 </body>
