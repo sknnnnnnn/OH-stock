@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OH stock</title>
+    <title>OH stock - Realtime Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
@@ -22,139 +22,120 @@
             justify-content: center;
             font-size: 11px;
             font-weight: 600;
-            color: rgba(239, 68, 68, 0.7);
-            background-color: rgba(254, 242, 242, 0.8);
-            border-radius: 0.75rem;
+            color: rgba(239, 68, 68, 0.6);
+            background-color: rgba(254, 242, 242, 0.7);
+            border-radius: 0.5rem;
             pointer-events: none;
             letter-spacing: 0.05em;
             transform: rotate(-5deg);
         }
         .dark .out-of-stock-wrapper.sold-out::after {
-            background-color: rgba(3, 7, 18, 0.85);
-            color: rgba(248, 113, 113, 0.8);
+            background-color: rgba(15, 23, 42, 0.8);
+            color: rgba(248, 113, 113, 0.7);
         }
-        @keyframes popGreen {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        .pop-animation { animation: popGreen 0.3s ease-in-out; }
     </style>
 </head>
-<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 pb-28 transition-colors duration-300">
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-12 transition-colors duration-300">
 
-    <!-- Header ไม่ค้าง (ปลดล็อค sticky ออกแล้ว) -->
-    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-300">
-        <div class="max-w-2xl mx-auto px-4 py-3 space-y-3">
+    <!-- Header แบบ Sticky ล็อกติดด้านบน -->
+    <header class="bg-white dark:bg-slate-800 border-b dark:border-slate-700 sticky top-0 z-20 shadow-xs transition-colors duration-300">
+        <div class="max-w-3xl mx-auto px-4 py-3 space-y-3">
             
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2">
+            <!-- บรรทัดที่ 1: ชื่อระบบ, โหมด, ปุ่ม Dark Mode, ปุ่ม 3 ขีด -->
+            <div class="flex justify-between items-center gap-2">
+                <div class="flex items-center gap-1.5 shrink-0">
                     <span class="text-xl">🧋</span>
-                    <h1 class="font-semibold text-base text-slate-900 dark:text-white">OH stock</h1>
-                    <span id="syncStatus" class="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">⏳ กำลังเชื่อมต่อ...</span>
+                    <h1 class="font-bold text-base text-slate-900 dark:text-white">OH stock</h1>
                 </div>
                 
-                <div class="flex items-center gap-2">
-                    <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                        <button id="btnDaily" onclick="switchMode('daily')" class="px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs transition">Daily</button>
-                        <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-lg text-slate-500 dark:text-slate-400 transition">Weekly</button>
-                    </div>
+                <!-- โหมด Daily / Weekly -->
+                <div class="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                    <button id="btnDaily" onclick="switchMode('daily')" class="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition">Daily</button>
+                    <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">Weekly</button>
+                </div>
 
-                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 rounded-xl text-xs transition" title="สลับโหมดสว่าง/มืด">
+                <!-- มุมขวา: ปุ่ม Dark Mode และ เมนู 3 ขีด -->
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition">
                         <span id="themeIcon">🌙</span>
+                    </button>
+                    <button onclick="toggleMenu()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 px-2.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition">
+                        ☰
                     </button>
                 </div>
             </div>
 
-            <div class="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+            <!-- บรรทัดที่ 2: ตัวเลขสรุปสถานะการนับ -->
+            <div class="pt-1 border-t border-slate-100 dark:border-slate-700/60">
                 <div class="flex justify-between items-center text-xs">
-                    <div class="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs">
-                        <span class="text-slate-500 dark:text-slate-400">📊 สถานะ:</span>
-                        <span class="font-bold text-emerald-600 dark:text-emerald-400">เสร็จ: <span id="countDone">0</span></span>
-                        <span class="text-slate-300 dark:text-slate-700">|</span>
-                        <span class="font-bold text-slate-700 dark:text-slate-300">ทั้งหมด: <span id="countTotal">0</span></span>
-                        <span class="text-slate-300 dark:text-slate-700">|</span>
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <span class="font-medium text-slate-500 dark:text-slate-400">📊 การนับ:</span>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400">นับเสร็จ: <span id="countDone">0</span></span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200">ทั้งหมด: <span id="countTotal">0</span></span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
                         <span class="font-bold text-amber-600 dark:text-amber-400">รอนับ: <span id="countPending">0</span></span>
                     </div>
                 </div>
-
-                <input type="text" id="searchInput" oninput="renderList()" placeholder="🔍 ค้นหารหัส หรือ ชื่อสินค้า..." 
-                    class="w-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                
-                <div class="flex gap-1.5">
-                    <button id="filterAll" onclick="setFilter('all')" class="flex-1 py-1.5 text-xs rounded-xl border bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium">ทั้งหมด</button>
-                    <button id="filterPending" onclick="setFilter('pending')" class="flex-1 py-1.5 text-xs rounded-xl border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800">⏳ รอนับ</button>
-                    <button id="filterDone" onclick="setFilter('done')" class="flex-1 py-1.5 text-xs rounded-xl border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800">✅ เสร็จแล้ว</button>
-                </div>
-
-                <div id="categoryContainer" class="flex gap-1.5 overflow-x-auto pb-1 text-xs"></div>
             </div>
+
+            <!-- บรรทัดที่ 3: ช่องค้นหา & ปุ่มกรองสถานะ -->
+            <div class="space-y-2">
+                <input type="text" id="searchInput" oninput="renderList()" placeholder="🔍 ค้นหารหัส หรือ ชื่อสินค้า..." 
+                    class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
+                
+                <div class="flex gap-1">
+                    <button id="filterAll" onclick="setFilter('all')" class="flex-1 py-1.5 text-xs rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium">ทั้งหมด</button>
+                    <button id="filterPending" onclick="setFilter('pending')" class="flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">⏳ รอนับ / ยังไม่ครบ</button>
+                    <button id="filterDone" onclick="setFilter('done')" class="flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">✅ นับเสร็จแล้ว</button>
+                </div>
+            </div>
+
+            <!-- บรรทัดที่ 4: หมวดหมู่สินค้า -->
+            <div id="categoryContainer" class="flex gap-1.5 overflow-x-auto pb-1 text-xs"></div>
 
         </div>
         
-        <div class="bg-slate-200 dark:bg-slate-800 h-1.5 w-full">
+        <!-- หลอด Progress Bar -->
+        <div class="bg-slate-200 dark:bg-slate-700 h-1.5 w-full">
             <div id="progressBar" class="bg-emerald-500 h-1.5 transition-all duration-500" style="width: 0%"></div>
         </div>
     </header>
 
-    <main class="max-w-2xl mx-auto p-4 space-y-4">
-
-        <!-- ปุ่มแอคชันหลัก จัดตรงกลาง แบบน่ารักสวยงาม -->
-        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-xs border border-slate-200/80 dark:border-slate-800 space-y-2 text-center">
-            <div class="grid grid-cols-3 gap-2">
-                <button onclick="fetchFromSheetsAndSyncFirebase()" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 transition group active:scale-95">
-                    <span class="text-base mb-1 group-hover:rotate-180 transition duration-500">🔄</span>
-                    <span class="text-[11px] font-medium leading-tight">ดึงสินค้า Sheets</span>
-                </button>
+    <!-- Side Drawer เมนูย่อย (เปิดเมื่อกดปุ่ม 3 ขีด) -->
+    <div id="menuDrawer" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden transition-opacity duration-300" onclick="toggleMenu()">
+        <div class="absolute right-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-800 p-5 shadow-2xl flex flex-col justify-between" onclick="event.stopPropagation()">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b dark:border-slate-700 pb-3">
+                    <h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">⚙️ เมนูจัดการระบบ</h2>
+                    <button onclick="toggleMenu()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-base">✕</button>
+                </div>
                 
-                <button onclick="submitToGoogleSheets()" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 transition active:scale-95">
-                    <span class="text-base mb-1">📤</span>
-                    <span class="text-[11px] font-medium leading-tight">ส่งเข้าระบบ</span>
-                </button>
-                
-                <button onclick="startNewDay()" class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 transition active:scale-95">
-                    <span class="text-base mb-1">🌅</span>
-                    <span class="text-[11px] font-medium leading-tight">เริ่มรอบวันใหม่</span>
-                </button>
+                <div class="space-y-2">
+                    <button onclick="fetchFromSheetsAndSyncFirebase(); toggleMenu();" class="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition">
+                        <span>🔄</span> อัปเดตรายการสินค้าจาก Sheets
+                    </button>
+                    <button onclick="submitToGoogleSheets(); toggleMenu();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-sm transition">
+                        <span>📤</span> ยืนยันส่งข้อมูลเข้าระบบ
+                    </button>
+                    <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition">
+                        <span>🌅</span> เริ่มรอบวันใหม่ (รีเซ็ตการนับ)
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <div id="stockList" class="space-y-3"></div>
-
-    </main>
-
-    <!-- Modal เครื่องคิดเลข -->
-    <div id="calcModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center hidden">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 w-72">
-            <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
-                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200" id="calcTitle">เครื่องคิดเลขเศษ</span>
-                <button onclick="closeCalculator()" class="text-slate-400 hover:text-slate-600 text-xs font-bold p-1">✕</button>
-            </div>
-            <input type="text" id="calcDisplay" readonly class="w-full bg-slate-50 dark:bg-slate-950 text-right p-2 rounded-xl text-lg font-mono mb-3 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100" value="0">
-            <div class="grid grid-cols-4 gap-1.5 text-sm">
-                <button onclick="calcClear()" class="bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 p-2 rounded-xl font-medium">C</button>
-                <button onclick="calcAppend('/')" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">÷</button>
-                <button onclick="calcAppend('*')" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">×</button>
-                <button onclick="calcBack()" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">⌫</button>
-                <button onclick="calcAppend('7')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">7</button>
-                <button onclick="calcAppend('8')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">8</button>
-                <button onclick="calcAppend('9')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">9</button>
-                <button onclick="calcAppend('-')" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">-</button>
-                <button onclick="calcAppend('4')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">4</button>
-                <button onclick="calcAppend('5')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">5</button>
-                <button onclick="calcAppend('6')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">6</button>
-                <button onclick="calcAppend('+')" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">+</button>
-                <button onclick="calcAppend('1')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">1</button>
-                <button onclick="calcAppend('2')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">2</button>
-                <button onclick="calcAppend('3')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">3</button>
-                <button onclick="calcApply()" class="row-span-2 bg-emerald-600 text-white rounded-xl font-medium flex items-center justify-center text-xs shadow-sm">ตกลง</button>
-                <button onclick="calcAppend('0')" class="col-span-2 bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">0</button>
-                <button onclick="calcAppend('.')" class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">.</button>
+            <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">
+                OH stock System v2.0
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK & Logic -->
+    <!-- รายการสินค้า -->
+    <main class="max-w-3xl mx-auto p-4 space-y-3">
+        <div id="stockList" class="space-y-3"></div>
+    </main>
+
+    <!-- Firebase SDK Modular -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -178,11 +159,8 @@
         let currentMode = 'daily';
         let currentFilter = 'all';
         let selectedCategory = 'ทั้งหมด';
-        let activeInputId = null;
         let lastCompletedCount = 0;
         let stockItems = [];
-
-        const statusEl = document.getElementById("syncStatus");
 
         function listenToFirebase() {
             const stockRef = ref(db, `stock_${currentMode}`);
@@ -190,8 +168,6 @@
                 const data = snapshot.val();
                 if (data) {
                     stockItems = Array.isArray(data) ? data : Object.values(data);
-                    statusEl.innerText = "🟢 Realtime Sync";
-                    statusEl.className = "text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800";
                 } else {
                     fetchFromSheetsAndSyncFirebase(true);
                 }
@@ -199,15 +175,12 @@
                 renderList();
             }, (error) => {
                 console.error("Firebase Read Error:", error);
-                statusEl.innerText = "❌ หลุดเชื่อมต่อ";
-                statusEl.className = "text-[10px] text-rose-600 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-800";
             });
         }
 
         window.fetchFromSheetsAndSyncFirebase = async function(isInitial = false) {
-            if (!isInitial && !confirm("🔄 ต้องการอัปเดตรายการสินค้าจาก Google Sheets ใช่หรือไม่?")) return;
+            if (!isInitial && !confirm("🔄 ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่?")) return;
 
-            statusEl.innerText = "🔄 กำลังโหลด...";
             try {
                 const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
                 const rawData = await response.json();
@@ -220,7 +193,7 @@
                     });
                     
                     await set(ref(db, `stock_${currentMode}`), formattedData);
-                    if (!isInitial) alert("✅ อัปเดตรายการสินค้าจาก Sheets เรียบร้อยแล้ว!");
+                    alert("✅ อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อย!");
                 }
             } catch (err) {
                 console.error(err);
@@ -231,8 +204,8 @@
         window.switchMode = function(mode) {
             currentMode = mode;
             selectedCategory = 'ทั้งหมด';
-            document.getElementById('btnDaily').className = mode === 'daily' ? 'px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs transition' : 'px-3 py-1 text-xs font-medium rounded-lg text-slate-500 dark:text-slate-400 transition';
-            document.getElementById('btnWeekly').className = mode === 'weekly' ? 'px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs transition' : 'px-3 py-1 text-xs font-medium rounded-lg text-slate-500 dark:text-slate-400 transition';
+            document.getElementById('btnDaily').className = mode === 'daily' ? 'px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition' : 'px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition';
+            document.getElementById('btnWeekly').className = mode === 'weekly' ? 'px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition' : 'px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition';
             listenToFirebase();
         };
 
@@ -241,9 +214,9 @@
             ['all', 'pending', 'done'].forEach(f => {
                 const btn = document.getElementById(`filter${f.charAt(0).toUpperCase() + f.slice(1)}`);
                 if (f === filter) {
-                    btn.className = "flex-1 py-1.5 text-xs rounded-xl border bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium";
+                    btn.className = "flex-1 py-1.5 text-xs rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium";
                 } else {
-                    btn.className = "flex-1 py-1.5 text-xs rounded-xl border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800";
+                    btn.className = "flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
                 }
             });
             renderList();
@@ -276,7 +249,6 @@
 
         function updateProgressAndUI() {
             if (stockItems.length === 0) return;
-
             const total = stockItems.length;
             const completed = stockItems.filter(i => getStatusType(i) === 'done').length;
             const pending = total - completed;
@@ -301,7 +273,7 @@
 
             categories.forEach(cat => {
                 const btn = document.createElement("button");
-                btn.className = `px-3 py-1.5 rounded-xl border text-xs whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 font-medium' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'}`;
+                btn.className = `px-3 py-1.5 rounded-lg border text-xs whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`;
                 btn.innerText = cat;
                 btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); };
                 container.appendChild(btn);
@@ -328,7 +300,7 @@
             updateProgressAndUI();
 
             if (items.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">ไม่พบรายการสินค้า</div>`;
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">ไม่พบรายการสินค้า</div>`;
                 return;
             }
 
@@ -350,82 +322,73 @@
                                   (item.today?.frac1 === 0 || item.today?.frac1 === "0") && 
                                   (item.today?.frac2 === 0 || item.today?.frac2 === "0");
 
-                let cardBg = 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800';
-                let badgeClass = 'text-slate-400 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700';
+                let cardBg = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
+                let badgeClass = 'text-slate-400 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600';
                 let badgeText = '⏳ รอนับ';
 
                 if (status === 'incomplete') {
                     cardBg = 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50';
-                    badgeClass = 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800';
+                    badgeClass = 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700';
                     badgeText = '⏳ ยังไม่ครบ';
                 } else if (status === 'done') {
-                    cardBg = 'bg-emerald-50/60 dark:bg-emerald-950/25 border-emerald-300 dark:border-emerald-800';
-                    badgeClass = 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 font-semibold';
-                    badgeText = '✅ เสร็จแล้ว';
+                    cardBg = 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700';
+                    badgeClass = 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-700 font-semibold';
+                    badgeText = '✅ นับเสร็จแล้ว';
                 }
 
-                let typeLabel = "นับเต็ม";
-                if (cleanType === 'frac') typeLabel = "นับเศษ";
-                else if (cleanType === 'frac2') typeLabel = "นับเศษ (2 ช่อง)";
-                else typeLabel = "นับเต็ม+เศษ";
+                let typeLabel = cleanType === 'frac' ? "นับเศษ" : cleanType === 'frac2' ? "นับเศษ (2 ช่อง)" : "นับเต็มและเศษ";
 
                 const card = document.createElement("div");
                 card.id = `card_${originalIdx}`;
-                card.className = `p-3.5 sm:p-4 rounded-2xl border transition duration-200 shadow-xs ${cardBg}`;
+                card.className = `p-4 rounded-xl border transition duration-200 shadow-xs ${cardBg}`;
                 
                 card.innerHTML = `
-                    <div class="flex justify-between items-start gap-2 mb-2.5">
+                    <div class="flex justify-between items-start gap-2 mb-2">
                         <div>
                             <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">${item.id}</span>
-                                <span class="text-[10px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-900">📌 ${typeLabel}</span>
-                                ${item.tare > 0 ? `<span class="text-[10px] text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-1.5 py-0.5 rounded-md border border-rose-100 dark:border-rose-900">✂️ -${item.tare}</span>` : ''}
-                                <span class="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded-md">${item.category}</span>
+                                <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${item.id}</span>
+                                <span class="text-[10px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-200">📌 ${typeLabel}</span>
+                                ${item.tare > 0 ? `<span class="text-[10px] text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-200">✂️ ตัดกระปุก: -${item.tare}</span>` : ''}
+                                <span class="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-1.5 py-0.5 rounded">${item.category}</span>
                             </div>
-                            <h2 class="text-xs sm:text-sm font-medium text-slate-900 dark:text-white mt-1 leading-snug">${item.name} (${item.unit})</h2>
+                            <h2 class="text-xs sm:text-sm font-medium text-slate-900 dark:text-white mt-1">${item.name} (${item.unit})</h2>
                         </div>
-                        <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1">
+                        <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1">
                             ${badgeText}
                         </span>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2.5">
+                    <div class="grid grid-cols-3 gap-2 mb-2">
                         <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5 text-center">จำนวนเต็ม</span>
-                            <input type="number" id="f_${originalIdx}" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">จำนวนเต็ม</span>
+                            <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
                         
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5 text-center">เศษปกติ</span>
-                            <div class="flex items-center">
-                                <input type="number" id="f1_${originalIdx}" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none pr-6" placeholder="0">
-                                <button onclick="openCalculator('f1_${originalIdx}', 'เศษปกติ: ${item.name}')" class="absolute right-1 bottom-1.5 text-slate-400 hover:text-emerald-500 p-0.5 text-xs z-10">🧮</button>
-                            </div>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษปกติ</span>
+                            <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
 
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5 text-center">เศษกระปุก</span>
-                            <div class="flex items-center">
-                                <input type="number" id="f2_${originalIdx}" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none pr-6" placeholder="0">
-                                <button onclick="openCalculator('f2_${originalIdx}', 'เศษกระปุก: ${item.name}')" class="absolute right-1 bottom-1.5 text-slate-400 hover:text-emerald-500 p-0.5 text-xs z-10">🧮</button>
-                            </div>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษกระปุก</span>
+                            <input type="number" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2 border-t border-slate-100 dark:border-slate-800/80 gap-2">
-                        <div class="flex gap-1.5 w-full sm:w-auto">
-                            <button onclick="setAsYst(${originalIdx})" class="flex-1 sm:flex-none bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 px-2 py-1 rounded-lg text-[10px] font-medium transition">
-                                ↺ ยอดเมื่อวาน
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2.5 border-t border-slate-200/60 dark:border-slate-700 gap-2">
+                        <div class="flex gap-1.5">
+                            <button onclick="setAsYst(${originalIdx})" class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md text-[11px] font-medium transition">
+                                ↺ ใช้ค่ายอดเมื่อวาน
                             </button>
-                            <button onclick="setAsZero(${originalIdx})" class="flex-1 sm:flex-none bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:bg-rose-50 text-rose-600 dark:text-rose-400 px-2 py-1 rounded-lg text-[10px] font-medium transition">
-                                ✕ ของหมด (0)
+                            <button onclick="setAsZero(${originalIdx})" class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-rose-50 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-md text-[11px] font-medium transition">
+                                ✕ กำหนดของหมด (0)
                             </button>
                         </div>
                         
-                        <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 text-[10px] sm:text-[11px]">
-                            <span class="text-slate-400 font-mono">เมื่อวาน: ${item.yst?.full ?? 0} | ${item.yst?.frac ?? 0}</span>
-                            <span id="summary_${originalIdx}" class="text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800 font-mono">
-                                ( เต็ม : ${fFullVal} | เศษ : ${totalFrac} )
+                        <div class="flex items-center gap-3 text-[11px] flex-wrap">
+                            <span class="text-slate-400 font-mono">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
+                            <span class="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-100/70 dark:bg-emerald-900/40 px-2.5 py-1 rounded-md border border-emerald-200 font-mono">
+                                ( เต็ม : ${fFullVal} | เศษรวม : ${totalFrac} )
                             </span>
                         </div>
                     </div>
@@ -444,8 +407,8 @@
             const item = stockItems[idx];
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today`] = {
-                full: item.yst?.full ?? 0,
-                frac1: item.yst?.frac ?? 0,
+                full: item.yst.full,
+                frac1: item.yst.frac,
                 frac2: 0
             };
             update(ref(db), updates);
@@ -464,7 +427,7 @@
         };
 
         window.startNewDay = function() {
-            if (confirm("🌅 ต้องการเริ่มรอบวันใหม่ใช่หรือไม่?\n(ค่ายอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวานบนระบบ Realtime)")) {
+            if (confirm("🌅 ต้องการเริ่มรอบวันใหม่ใช่หรือไม่?\n(ค่ายอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวานบน Firebase)")) {
                 const newItems = stockItems.map(item => {
                     item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
                     item.today = { full: "", frac1: "", frac2: "" };
@@ -477,11 +440,11 @@
         window.submitToGoogleSheets = async function() {
             const completedItems = stockItems.filter(item => getStatusType(item) === 'done');
             if (completedItems.length === 0) {
-                alert("⚠️ ยังไม่มีรายการที่นับเสร็จแล้ว กรุณานับให้อย่างน้อย 1 รายการก่อนส่งข้อมูล");
+                alert("⚠️ ยังไม่มีรายการที่นับเสร็จแล้ว");
                 return;
             }
 
-            if (!confirm(`📤 ต้องการส่งข้อมูลจำนวน ${completedItems.length} รายการ ไปยัง Google Sheets ใช่หรือไม่?`)) return;
+            if (!confirm(`📤 ต้องการส่งข้อมูล ${completedItems.length} รายการ ไปยัง Google Sheets ใช่หรือไม่?`)) return;
 
             try {
                 await fetch(WEB_APP_URL, {
@@ -490,7 +453,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ mode: currentMode, items: completedItems })
                 });
-                alert(`✅ ส่งข้อมูลจำนวน ${completedItems.length} รายการ ไปยัง Google Sheets เรียบร้อยแล้ว!`);
+                alert(`✅ ส่งข้อมูลเรียบร้อยแล้ว!`);
             } catch (error) {
                 alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล");
             }
@@ -506,40 +469,9 @@
             }
         };
 
-        window.openCalculator = function(inputId, titleText) {
-            activeInputId = inputId;
-            document.getElementById("calcTitle").innerText = titleText;
-            window.calcValue = document.getElementById(inputId).value || "0";
-            document.getElementById("calcDisplay").value = window.calcValue;
-            document.getElementById("calcModal").classList.remove("hidden");
-        };
-
-        window.closeCalculator = function() {
-            document.getElementById("calcModal").classList.add("hidden");
-            activeInputId = null;
-        };
-
-        window.calcValue = "0";
-        window.calcAppend = function(val) {
-            window.calcValue = window.calcValue === "0" && !isNaN(val) ? val : window.calcValue + val;
-            document.getElementById("calcDisplay").value = window.calcValue;
-        };
-        window.calcClear = function() { window.calcValue = "0"; document.getElementById("calcDisplay").value = "0"; };
-        window.calcBack = function() { window.calcValue = window.calcValue.slice(0, -1) || "0"; document.getElementById("calcDisplay").value = window.calcValue; };
-        window.calcApply = function() {
-            try { 
-                const result = eval(window.calcValue).toString();
-                if (activeInputId) {
-                    const inputEl = document.getElementById(activeInputId);
-                    inputEl.value = result;
-                    
-                    const parts = activeInputId.split('_');
-                    const fieldType = parts[0] === 'f1' ? 'frac1' : 'frac2';
-                    const idx = parseInt(parts[1]);
-                    window.updateFirebaseInput(idx, fieldType, result);
-                }
-                closeCalculator();
-            } catch(e) { document.getElementById("calcDisplay").value = "Error"; window.calcValue = "0"; }
+        window.toggleMenu = function() {
+            const drawer = document.getElementById('menuDrawer');
+            drawer.classList.toggle('hidden');
         };
 
         listenToFirebase();
