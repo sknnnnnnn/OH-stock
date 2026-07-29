@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OH stock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+        .out-of-stock-wrapper { position: relative; }
+        .out-of-stock-wrapper.sold-out::after {
+            content: "ของหมด";
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(239, 68, 68, 0.6);
+            background-color: rgba(254, 242, 242, 0.7);
+            border-radius: 0.5rem;
+            pointer-events: none;
+            letter-spacing: 0.05em;
+            transform: rotate(-5deg);
+        }
+        .dark .out-of-stock-wrapper.sold-out::after {
+            background-color: rgba(15, 23, 42, 0.8);
+            color: rgba(248, 113, 113, 0.7);
+        }
+        @keyframes popGreen {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .pop-animation { animation: popGreen 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-28 transition-colors duration-300">
+
+    <header class="bg-white dark:bg-slate-800 border-b dark:border-slate-700 sticky top-0 z-20 shadow-xs transition-colors duration-300">
+        <div class="max-w-3xl mx-auto px-4 py-3 space-y-3">
+            
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🧋</span>
+                    <h1 class="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">OH stock</h1>
+                    <span id="saveStatus" class="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">💾 จำข้อมูลในเครื่องแล้ว</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <div class="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                        <button id="btnDaily" onclick="switchMode('daily')" class="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition">Daily</button>
+                        <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">Weekly</button>
+                    </div>
+
+                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition" title="สลับโหมดสว่าง/มืด">
+                        <span id="themeIcon">🌙</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                <div class="flex justify-between items-center text-xs">
+                    <div class="flex items-center gap-3">
+                        <span>📊 สถานะการนับ:</span>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400">นับเสร็จ: <span id="countDone">0</span></span>
+                        <span class="text-slate-400">|</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200">ทั้งหมด: <span id="countTotal">0</span></span>
+                        <span class="text-slate-400">|</span>
+                        <span class="font-bold text-amber-600 dark:text-amber-400">รอนับ: <span id="countPending">0</span></span>
+                    </div>
+                </div>
+
+                <input type="text" id="searchInput" oninput="renderList()" placeholder="🔍 ค้นหารหัส หรือ ชื่อสินค้า..." 
+                    class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
+                
+                <div class="flex gap-1">
+                    <button id="filterAll" onclick="setFilter('all')" class="flex-1 py-1.5 text-xs rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium">ทั้งหมด</button>
+                    <button id="filterPending" onclick="setFilter('pending')" class="flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">⏳ รอนับ / ยังไม่ครบ</button>
+                    <button id="filterDone" onclick="setFilter('done')" class="flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">✅ นับเสร็จแล้ว</button>
+                </div>
+
+                <div id="categoryContainer" class="flex gap-1.5 overflow-x-auto pb-1 text-xs"></div>
+            </div>
+
+        </div>
+        
+        <div class="bg-slate-200 dark:bg-slate-700 h-1.5 w-full">
+            <div id="progressBar" class="bg-emerald-500 h-1.5 transition-all duration-500" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto p-4 space-y-3">
+
+        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 flex flex-wrap gap-2 justify-between items-center">
+            <div class="flex flex-wrap gap-1.5 w-full">
+                <button onclick="confirmResetLocalData()" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition">
+                    🔄 อัปเดตรายการสินค้าจาก Sheets
+                </button>
+                <button onclick="submitToGoogleSheets()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 shadow-xs transition">
+                    📤 ยืนยันส่งข้อมูลเข้าระบบ
+                </button>
+                <button onclick="startNewDay()" class="flex-1 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition">
+                    🌅 เริ่มรอบวันใหม่ (รีเซ็ตการนับ)
+                </button>
+            </div>
+        </div>
+
+        <div id="stockList" class="space-y-3"></div>
+
+    </main>
+
+    <div id="calcModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border dark:border-slate-700 p-4 w-72">
+            <div class="flex justify-between items-center mb-2 pb-1 border-b dark:border-slate-700">
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200" id="calcTitle">เครื่องคิดเลขเศษ</span>
+                <button onclick="closeCalculator()" class="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+            </div>
+            <input type="text" id="calcDisplay" readonly class="w-full bg-slate-50 dark:bg-slate-900 text-right p-2 rounded-lg text-lg font-mono mb-3 border dark:border-slate-700 text-slate-800 dark:text-slate-100" value="0">
+            <div class="grid grid-cols-4 gap-1.5 text-sm">
+                <button onclick="calcClear()" class="bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 p-2 rounded-lg font-medium">C</button>
+                <button onclick="calcAppend('/')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">÷</button>
+                <button onclick="calcAppend('*')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">×</button>
+                <button onclick="calcBack()" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">⌫</button>
+                <button onclick="calcAppend('7')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">7</button>
+                <button onclick="calcAppend('8')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">8</button>
+                <button onclick="calcAppend('9')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">9</button>
+                <button onclick="calcAppend('-')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">-</button>
+                <button onclick="calcAppend('4')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">4</button>
+                <button onclick="calcAppend('5')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">5</button>
+                <button onclick="calcAppend('6')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">6</button>
+                <button onclick="calcAppend('+')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">+</button>
+                <button onclick="calcAppend('1')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">1</button>
+                <button onclick="calcAppend('2')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">2</button>
+                <button onclick="calcAppend('3')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">3</button>
+                <button onclick="calcApply()" class="row-span-2 bg-emerald-600 text-white rounded-lg font-medium flex items-center justify-center text-xs shadow-sm">ตกลง</button>
+                <button onclick="calcAppend('0')" class="col-span-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">0</button>
+                <button onclick="calcAppend('.')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">.</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzHaL8Ec89aJuRAnxtkFDZMKLOjBE3zeKCqXOOOOxo-VIAR3OWNDt2RLs4o4G4tAb8/exec";
+
+        let currentMode = 'daily';
+        let currentFilter = 'all';
+        let selectedCategory = 'ทั้งหมด';
+        let activeInputId = null;
+        let lastCompletedCount = 0;
+
+        let dataSets = {
+            daily: [],
+            weekly: []
+        };
+
+        // บันทึกลงความจำตัวเครื่อง LocalStorage
+        function saveToLocalStorage() {
+            localStorage.setItem(`oh_stock_v2_${currentMode}`, JSON.stringify(dataSets[currentMode]));
+        }
+
+        // โหลดข้อมูล (จะดึงจากเครื่องก่อนเสมอ พอกดรีเฟรชค่าเลยไม่หาย)
+        async function loadStockData(forceRefresh = false) {
+            const stockListEl = document.getElementById("stockList");
+            const savedLocalData = localStorage.getItem(`oh_stock_v2_${currentMode}`);
+
+            // ถ้ามีข้อมูลในเครื่องแล้ว และไม่ใช่การกดปุ่มบังคับดึงใหม่ ให้ใช้ของเก่าในเครื่องเลย
+            if (savedLocalData && !forceRefresh) {
+                dataSets[currentMode] = JSON.parse(savedLocalData);
+                renderCategories();
+                renderList();
+                return;
+            }
+
+            // ถ้าไม่มีข้อมูล หรือ กดปุ่มอัปเดต ให้ดึงจาก Google Sheets
+            if (stockListEl) {
+                stockListEl.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">กำลังโหลดรายการสินค้าจาก Google Sheets...</div>`;
+            }
+
+            try {
+                const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
+                const rawData = await response.json();
+
+                if (Array.isArray(rawData) && rawData.length > 0) {
+                    dataSets[currentMode] = rawData.map(item => {
+                        item.count_type = item.count_type ? item.count_type.toString().trim().toLowerCase() : 'both';
+                        if (!item.today) item.today = { full: "", frac1: "", frac2: "" };
+                        return item;
+                    });
+                    saveToLocalStorage();
+                }
+
+                renderCategories();
+                renderList();
+            } catch (error) {
+                console.error("Error loading data:", error);
+                if (stockListEl) {
+                    stockListEl.innerHTML = `<div class="text-center py-12 text-rose-500 text-xs bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</div>`;
+                }
+            }
+        }
+
+        function confirmResetLocalData() {
+            if (confirm("🔄 ต้องการอัปเดตรายการสินค้าจาก Google Sheets ใช่หรือไม่?\n(กรณีมีเพิ่ม/ลดรายการสินค้าใหม่)")) {
+                loadStockData(true);
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            selectedCategory = 'ทั้งหมด';
+            document.getElementById('btnDaily').className = mode === 'daily' ? 'px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition' : 'px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition';
+            document.getElementById('btnWeekly').className = mode === 'weekly' ? 'px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition' : 'px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition';
+            loadStockData();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['all', 'pending', 'done'].forEach(f => {
+                const btn = document.getElementById(`filter${f.charAt(0).toUpperCase() + f.slice(1)}`);
+                if (f === filter) {
+                    btn.className = "flex-1 py-1.5 text-xs rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium";
+                } else {
+                    btn.className = "flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+                }
+            });
+            renderList();
+        }
+
+        function renderCategories() {
+            const container = document.getElementById("categoryContainer");
+            if (!container) return;
+            container.innerHTML = "";
+            const items = dataSets[currentMode] || [];
+            const categories = ["ทั้งหมด", ...new Set(items.map(i => i.category))];
+
+            categories.forEach(cat => {
+                const btn = document.createElement("button");
+                btn.className = `px-3 py-1.5 rounded-lg border text-xs whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`;
+                btn.innerText = cat;
+                btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); };
+                container.appendChild(btn);
+            });
+        }
+
+        function getStatusType(item) {
+            if (!item || !item.today) return 'empty';
+            const f = item.today.full;
+            const f1 = item.today.frac1;
+            const f2 = item.today.frac2;
+            let type = item.count_type || 'both';
+
+            const hasFull = f !== "" && f !== null && f !== undefined;
+            const hasFrac1 = f1 !== "" && f1 !== null && f1 !== undefined;
+            const hasFrac2 = f2 !== "" && f2 !== null && f2 !== undefined;
+            const hasAnyInput = hasFull || hasFrac1 || hasFrac2;
+
+            if (!hasAnyInput) return 'empty'; 
+
+            if (type === 'full') return hasFull ? 'done' : 'incomplete';
+            if (type === 'frac') return hasFrac1 ? 'done' : 'incomplete';
+            if (type === 'frac2') return (hasFrac1 && hasFrac2) ? 'done' : 'incomplete';
+            
+            if (type === 'both') {
+                const hasFullFilled = hasFull;
+                const hasFracFilled = hasFrac1 || hasFrac2;
+                if (hasFullFilled && hasFracFilled) return 'done';
+                return 'incomplete';
+            }
+
+            return (hasFull || hasFrac1 || hasFrac2) ? 'done' : 'incomplete';
+        }
+
+        function updateProgressAndUI() {
+            const items = dataSets[currentMode] || [];
+            if (items.length === 0) return;
+
+            const total = items.length;
+            const completed = items.filter(i => getStatusType(i) === 'done').length;
+            const pending = total - completed;
+            const percent = Math.round((completed / total) * 100);
+
+            document.getElementById("progressBar").style.width = `${percent}%`;
+            document.getElementById("countDone").innerText = completed;
+            document.getElementById("countTotal").innerText = total;
+            document.getElementById("countPending").innerText = pending;
+
+            if (percent === 100 && lastCompletedCount < total) {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+            lastCompletedCount = completed;
+        }
+
+        function renderList() {
+            const container = document.getElementById("stockList");
+            if (!container) return;
+            container.innerHTML = "";
+            const searchInputEl = document.getElementById("searchInput");
+            const searchVal = searchInputEl ? searchInputEl.value.toLowerCase() : "";
+
+            const rawItems = dataSets[currentMode] || [];
+            let items = rawItems.filter(item => {
+                const matchCategory = selectedCategory === 'ทั้งหมด' || item.category === selectedCategory;
+                const matchSearch = item.id.toLowerCase().includes(searchVal) || item.name.toLowerCase().includes(searchVal);
+                if (!matchCategory || !matchSearch) return false;
+                
+                const status = getStatusType(item);
+                if (currentFilter === 'pending') return status === 'empty' || status === 'incomplete';
+                if (currentFilter === 'done') return status === 'done';
+                return true;
+            });
+
+            updateProgressAndUI();
+
+            if (items.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">ไม่พบรายการสินค้า</div>`;
+                return;
+            }
+
+            items.forEach((item) => {
+                const originalIdx = dataSets[currentMode].indexOf(item);
+                let cleanType = item.count_type || 'both';
+                
+                const fFullVal = item.today?.full !== "" && item.today?.full !== null ? item.today?.full : 0;
+                const f1Val = parseFloat(item.today?.frac1) || 0;
+                
+                let f2Val = parseFloat(item.today?.frac2) || 0;
+                let finalFrac2 = f2Val - (item.tare || 0);
+                if (finalFrac2 < 0) finalFrac2 = 0;
+
+                const totalFrac = f1Val + finalFrac2;
+                const status = getStatusType(item);
+
+                const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && 
+                                  (item.today?.frac1 === 0 || item.today?.frac1 === "0") && 
+                                  (item.today?.frac2 === 0 || item.today?.frac2 === "0");
+
+                let cardBg = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
+                let badgeClass = 'text-slate-400 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600';
+                let badgeText = '⏳ รอนับ';
+
+                if (status === 'incomplete') {
+                    cardBg = 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50';
+                    badgeClass = 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700';
+                    badgeText = '⏳ ยังไม่ครบ';
+                } else if (status === 'done') {
+                    cardBg = 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700';
+                    badgeClass = 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-700 font-semibold';
+                    badgeText = '✅ นับเสร็จแล้ว';
+                }
+
+                let typeLabel = "นับจำนวนเต็ม";
+                if (cleanType === 'frac') typeLabel = "นับเศษ";
+                else if (cleanType === 'frac2') typeLabel = "นับเศษ (2 ช่อง)";
+                else typeLabel = "นับเต็มและเศษ";
+
+                const card = document.createElement("div");
+                card.id = `card_${originalIdx}`;
+                card.className = `p-4 rounded-xl border transition duration-200 shadow-xs ${cardBg}`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2 mb-2">
+                        <div>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${item.id}</span>
+                                <span class="text-[10px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-200">📌 ${typeLabel}</span>
+                                ${item.tare > 0 ? `<span class="text-[10px] text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-200">✂️ ตัดกระปุก: -${item.tare}</span>` : ''}
+                                <span class="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-1.5 py-0.5 rounded">${item.category}</span>
+                            </div>
+                            <h2 class="text-xs sm:text-sm font-medium text-slate-900 dark:text-white mt-1">${item.name} (${item.unit})</h2>
+                        </div>
+                        <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1">
+                            ${badgeText}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 mb-2">
+                        <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">จำนวนเต็ม</span>
+                            <input type="number" id="f_${originalIdx}" value="${item.today?.full ?? ''}" oninput="handleInput(${originalIdx})" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                        </div>
+                        
+                        <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษปกติ</span>
+                            <div class="flex items-center">
+                                <input type="number" id="f1_${originalIdx}" value="${item.today?.frac1 ?? ''}" oninput="handleInput(${originalIdx})" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none pr-7" placeholder="0">
+                                <button onclick="openCalculator('f1_${originalIdx}', 'เศษปกติ: ${item.name}')" class="absolute right-1 bottom-1 text-slate-400 hover:text-emerald-600 p-1 text-xs z-10">🧮</button>
+                            </div>
+                        </div>
+
+                        <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษกระปุก</span>
+                            <div class="flex items-center">
+                                <input type="number" id="f2_${originalIdx}" value="${item.today?.frac2 ?? ''}" oninput="handleInput(${originalIdx})" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none pr-7" placeholder="0">
+                                <button onclick="openCalculator('f2_${originalIdx}', 'เศษกระปุก: ${item.name}')" class="absolute right-1 bottom-1 text-slate-400 hover:text-emerald-600 p-1 text-xs z-10">🧮</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2.5 border-t border-slate-200/60 dark:border-slate-700 gap-2">
+                        <div class="flex gap-1.5">
+                            <button onclick="setAsYst(${originalIdx})" class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md text-[11px] font-medium transition">
+                                ↺ ใช้ค่ายอดเมื่อวาน
+                            </button>
+                            <button onclick="setAsZero(${originalIdx})" class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-rose-50 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-md text-[11px] font-medium transition">
+                                ✕ กำหนดของหมด (0)
+                            </button>
+                        </div>
+                        
+                        <div class="flex items-center gap-3 text-[11px] flex-wrap">
+                            <span class="text-slate-400 font-mono">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
+                            <span id="summary_${originalIdx}" class="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-100/70 dark:bg-emerald-900/40 px-2.5 py-1 rounded-md border border-emerald-200 font-mono">
+                                ( เต็ม : ${fFullVal} | เศษรวม : ${totalFrac} )
+                            </span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // เมื่อพิมพ์ปุ๊บ บันทึกลงเครื่องและอัปเดตสีทันที Instant Response
+        function handleInput(idx) {
+            const item = dataSets[currentMode][idx];
+            if (!item.today) item.today = {};
+            
+            const fEl = document.getElementById(`f_${idx}`);
+            const f1El = document.getElementById(`f1_${idx}`);
+            const f2El = document.getElementById(`f2_${idx}`);
+
+            item.today.full = fEl ? fEl.value : "";
+            item.today.frac1 = f1El ? f1El.value : "";
+            item.today.frac2 = f2El ? f2El.value : "";
+
+            const status = getStatusType(item);
+
+            // คำนวณยอด
+            const fFullDisplay = item.today.full !== "" ? item.today.full : 0;
+            const f1Num = parseFloat(item.today.frac1) || 0;
+            const f2Num = parseFloat(item.today.frac2) || 0;
+            let finalFrac2 = f2Num - (item.tare || 0);
+            if (finalFrac2 < 0) finalFrac2 = 0;
+            const totalFrac = f1Num + finalFrac2;
+
+            const summaryEl = document.getElementById(`summary_${idx}`);
+            if (summaryEl) {
+                summaryEl.innerText = `( เต็ม : ${fFullDisplay} | เศษรวม : ${totalFrac} )`;
+            }
+
+            // ตรวจสอบสถานะของหมด
+            const isZeroAll = (item.today.full === "0") && (item.today.frac1 === "0") && (item.today.frac2 === "0");
+            document.querySelectorAll(`#card_${idx} .out-of-stock-wrapper`).forEach(w => {
+                if (isZeroAll) w.classList.add('sold-out');
+                else w.classList.remove('sold-out');
+            });
+
+            // อัปเดตสีการ์ดและป้ายทันที
+            const cardEl = document.getElementById(`card_${idx}`);
+            const badgeEl = document.getElementById(`badge_${idx}`);
+            if (cardEl && badgeEl) {
+                if (status === 'done') {
+                    cardEl.className = "p-4 rounded-xl border transition duration-200 bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 shadow-xs pop-animation";
+                    setTimeout(() => cardEl.classList.remove('pop-animation'), 300);
+                    badgeEl.className = "text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-700 font-semibold text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1";
+                    badgeEl.innerText = "✅ นับเสร็จแล้ว";
+                } else if (status === 'incomplete') {
+                    cardEl.className = "p-4 rounded-xl border transition duration-200 bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50 shadow-xs";
+                    badgeEl.className = "text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700 text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1";
+                    badgeEl.innerText = "⏳ ยังไม่ครบ";
+                } else {
+                    cardEl.className = "p-4 rounded-xl border transition duration-200 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-xs";
+                    badgeEl.className = "text-slate-400 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1";
+                    badgeEl.innerText = "⏳ รอนับ";
+                }
+            }
+
+            // บันทึกลงตัวเครื่องทันทีที่เปลี่ยนค่า
+            saveToLocalStorage();
+            updateProgressAndUI();
+        }
+
+        function setAsYst(idx) {
+            const item = dataSets[currentMode][idx];
+            item.today = {
+                full: item.yst.full,
+                frac1: item.yst.frac,
+                frac2: 0
+            };
+            saveToLocalStorage();
+            renderList();
+        }
+
+        function setAsZero(idx) {
+            const item = dataSets[currentMode][idx];
+            const isCurrentlyZero = item.today?.full === "0" && item.today?.frac1 === "0" && item.today?.frac2 === "0";
+            item.today = {
+                full: isCurrentlyZero ? "" : "0",
+                frac1: isCurrentlyZero ? "" : "0",
+                frac2: isCurrentlyZero ? "" : "0"
+            };
+            saveToLocalStorage();
+            renderList();
+        }
+
+        function startNewDay() {
+            if (confirm("🌅 ต้องการเริ่มรอบวันใหม่ใช่หรือไม่?\n(ระบบจะเซฟค่ายอดนับวันนี้เป็นยอดเมื่อวาน และรีเซ็ตช่องใส่นับใหม่)")) {
+                dataSets[currentMode].forEach(item => {
+                    item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
+                    item.today = { full: "", frac1: "", frac2: "" };
+                });
+                saveToLocalStorage();
+                renderList();
+                alert("✨ รีเซ็ตวันใหม่เรียบร้อย!");
+            }
+        }
+
+        async function submitToGoogleSheets() {
+            const completedItems = dataSets[currentMode].filter(item => getStatusType(item) === 'done');
+            
+            if (completedItems.length === 0) {
+                alert("⚠️ ยังไม่มีรายการที่นับเสร็จแล้ว กรุณานับให้อย่างน้อย 1 รายการก่อนส่งข้อมูล");
+                return;
+            }
+
+            if (!confirm(`📤 ต้องการส่งข้อมูลที่นับเสร็จแล้วจำนวน ${completedItems.length} รายการ ไปยัง Google Sheets ใช่หรือไม่?`)) {
+                return;
+            }
+
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mode: currentMode,
+                        items: completedItems
+                    })
+                });
+
+                alert(`✅ ส่งข้อมูลจำนวน ${completedItems.length} รายการ ไปยัง Google Sheets เรียบร้อยแล้ว!`);
+            } catch (error) {
+                console.error("Error submitting data:", error);
+                alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง");
+            }
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            if (html.classList.contains('light')) {
+                html.classList.remove('light'); html.classList.add('dark'); icon.innerText = "☀️";
+            } else {
+                html.classList.remove('dark'); html.classList.add('light'); icon.innerText = "🌙";
+            }
+        }
+
+        function openCalculator(inputId, titleText) {
+            activeInputId = inputId;
+            document.getElementById("calcTitle").innerText = titleText;
+            calcValue = document.getElementById(inputId).value || "0";
+            document.getElementById("calcDisplay").value = calcValue;
+            document.getElementById("calcModal").classList.remove("hidden");
+        }
+
+        function closeCalculator() {
+            document.getElementById("calcModal").classList.add("hidden");
+            activeInputId = null;
+        }
+
+        let calcValue = "0";
+        function calcAppend(val) {
+            calcValue = calcValue === "0" && !isNaN(val) ? val : calcValue + val;
+            document.getElementById("calcDisplay").value = calcValue;
+        }
+        function calcClear() { calcValue = "0"; document.getElementById("calcDisplay").value = calcValue; }
+        function calcBack() { calcValue = calcValue.slice(0, -1) || "0"; document.getElementById("calcDisplay").value = calcValue; }
+        function calcApply() {
+            try { 
+                const result = eval(calcValue).toString();
+                if (activeInputId) {
+                    document.getElementById(activeInputId).value = result;
+                    const idxMatch = activeInputId.match(/\d+/);
+                    if (idxMatch) handleInput(parseInt(idxMatch[0]));
+                }
+                closeCalculator();
+            } catch(e) { document.getElementById("calcDisplay").value = "Error"; calcValue = "0"; }
+        }
+
+        window.onload = function() {
+            loadStockData();
+        };
+    </script>
+</body>
+</html>
