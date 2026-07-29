@@ -54,7 +54,6 @@
     <header id="mainHeader" class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b dark:border-slate-700/80 sticky top-0 z-30 shadow-xs">
         <div class="max-w-3xl mx-auto px-4 py-2.5 space-y-2">
             
-            <!-- โลโก้อิโมจิกล่อง + ข้อความ OH STOCK -->
             <div class="flex justify-between items-center gap-2">
                 <div class="flex items-center gap-2 shrink-0">
                     <div class="bg-slate-800 dark:bg-slate-700 text-white p-1.5 rounded-lg flex items-center justify-center text-base leading-none shadow-xs border border-slate-700">
@@ -128,7 +127,7 @@
                         <span>🔄</span> อัปเดตรายการสินค้าจาก Sheets
                     </button>
                     <button onclick="submitToGoogleSheets(); toggleMenu();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-sm transition">
-                        <span>📤</span> ยืนยันส่งข้อมูลเข้าระบบ
+                        <span>📤</span> ยืนยันส่งข้อมูลเข้าระบบ (เขียนทับตาราง)
                     </button>
                     <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition">
                         <span>🌅</span> เริ่มรอบวันใหม่ (รีเซ็ตการนับ)
@@ -137,7 +136,7 @@
             </div>
 
             <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">
-                OH STOCK v2.3
+                OH STOCK v2.5
             </div>
         </div>
     </div>
@@ -224,7 +223,7 @@
             measurementId: "G-LTGJR4QFW5"
         };
 
-        // 🔗 URL Google Apps Script ล่าสุดของคุณ
+        // 🔗 Google Apps Script Exec URL ที่ใส่ให้เรียบร้อยแล้ว
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzHaL8Ec89aJuRAnxtkFDZMKLOjBE3zeKCqXOOOOxo-VIAR3OWNDt2RLs4o4G4tAb8/exec";
 
         const app = initializeApp(firebaseConfig);
@@ -694,28 +693,27 @@
         };
 
         window.submitToGoogleSheets = async function() {
-            const completedItems = stockItems.filter(item => getStatusType(item) === 'done');
-            if (completedItems.length === 0) {
-                showCuteModal({ icon: '⚠️', title: 'ยังส่งไม่ได้', message: 'ยังไม่มีรายการสินค้าที่นับเสร็จสมบูรณ์เลยค่ะ' });
+            if (stockItems.length === 0) {
+                showCuteModal({ icon: '⚠️', title: 'ไม่มีข้อมูล', message: 'ไม่พบรายการสินค้าในระบบ' });
                 return;
             }
 
             showCuteModal({
                 icon: '📤',
                 title: 'ยืนยันการส่งข้อมูล',
-                message: `ต้องการส่งข้อมูลสินค้า ${completedItems.length} รายการ เข้าสู่ Google Sheets ใช่หรือไม่?`,
+                message: `ต้องการเขียนทับข้อมูลลง Google Sheets ทั้งหมด ${stockItems.length} รายการ ตามตำแหน่งบรรทัดใช่หรือไม่?`,
                 showCancel: true,
                 onConfirm: async () => {
                     showCuteModal({ icon: '⏳', title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets...' });
                     try {
                         const response = await fetch(WEB_APP_URL, {
                             method: 'POST',
-                            body: JSON.stringify({ mode: currentMode, items: completedItems })
+                            body: JSON.stringify({ mode: currentMode, items: stockItems })
                         });
                         const result = await response.json();
                         
                         if (result.status === 'success') {
-                            showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
+                            showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'บันทึกข้อมูลลง Google Sheets เรียบร้อยแล้วค่ะ' });
                         } else {
                             showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: result.message || 'ไม่สามารถส่งข้อมูลได้' });
                         }
