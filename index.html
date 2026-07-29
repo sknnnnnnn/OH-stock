@@ -121,11 +121,11 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Firebase Config ของคุณ oj-stock-a6af4
+        // Firebase Config (ปรับแก้ไข databaseURL ให้ตรงกับระบบแล้ว)
         const firebaseConfig = {
             apiKey: "AIzaSyDRQW8NeX4P4VjDLFrjZXx8S8XOyA47I58",
             authDomain: "oj-stock-a6af4.firebaseapp.com",
-            databaseURL: "https://oj-stock-a6af4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            databaseURL: "https://oj-stock-a6af4-default-rtdb.firebaseio.com",
             projectId: "oj-stock-a6af4",
             storageBucket: "oj-stock-a6af4.firebasestorage.app",
             messagingSenderId: "916746183266",
@@ -146,7 +146,7 @@
 
         const statusEl = document.getElementById("syncStatus");
 
-        // คอยดึงข้อมูลจาก Firebase แบบ Realtime (มีคนแก้ไขปุ๊บ ข้อมูลอัปเดตทุกเครื่องทันที)
+        // คอยดึงข้อมูลจาก Firebase แบบ Realtime
         function listenToFirebase() {
             const stockRef = ref(db, `stock_${currentMode}`);
             onValue(stockRef, (snapshot) => {
@@ -156,19 +156,19 @@
                     statusEl.innerText = "🟢 Realtime Sync พร้อมทำงาน";
                     statusEl.className = "text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800";
                 } else {
-                    // ถ้าใน Firebase ยังไม่มีข้อมูล ให้โหลดจาก Google Sheets มาใส่ครั้งแรก
+                    // ถ้ายังไม่มีข้อมูล ให้ดึงจาก Sheets มาลงครั้งแรก
                     fetchFromSheetsAndSyncFirebase(true);
                 }
                 renderCategories();
                 renderList();
             }, (error) => {
                 console.error("Firebase Read Error:", error);
-                statusEl.innerText = "❌ เชื่อมต่อ Firebase ไม่สำเร็จ (เช็ค Rules)";
+                statusEl.innerText = "❌ เชื่อมต่อ Firebase ไม่สำเร็จ";
                 statusEl.className = "text-[10px] text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200";
             });
         }
 
-        // ดึงรายการจาก Google Sheets มาอัปเดตใส่ Firebase
+        // ดึงรายการจาก Google Sheets มาอัปเดตลง Firebase
         window.fetchFromSheetsAndSyncFirebase = async function(isInitial = false) {
             if (!isInitial && !confirm("🔄 ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่?")) return;
 
@@ -184,7 +184,6 @@
                         return item;
                     });
                     
-                    // บันทึกลง Firebase
                     await set(ref(db, `stock_${currentMode}`), formattedData);
                     alert("✅ อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อย!");
                 }
@@ -390,7 +389,7 @@
             });
         };
 
-        // ยิงอัปเดตไปที่ Firebase ทันทีที่พิมพ์เสร็จ
+        // ยิงอัปเดตไปที่ Firebase ทันทีที่กรอกข้อมูล
         window.updateFirebaseInput = function(idx, field, val) {
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today/${field}`] = val;
@@ -463,7 +462,7 @@
             }
         };
 
-        // เริ่มฟัง Firebase
+        // เริ่มต้นเชื่อมต่อ Firebase
         listenToFirebase();
     </script>
 </body>
