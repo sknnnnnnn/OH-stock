@@ -20,19 +20,28 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
-            color: rgba(239, 68, 68, 0.6);
-            background-color: rgba(254, 242, 242, 0.7);
+            color: rgba(239, 68, 68, 0.7);
+            background-color: rgba(254, 242, 242, 0.85);
             border-radius: 0.5rem;
             pointer-events: none;
             letter-spacing: 0.05em;
-            transform: rotate(-5deg);
+            transform: rotate(-3deg);
         }
         .dark .out-of-stock-wrapper.sold-out::after {
-            background-color: rgba(15, 23, 42, 0.8);
-            color: rgba(248, 113, 113, 0.7);
+            background-color: rgba(15, 23, 42, 0.9);
+            color: rgba(248, 113, 113, 0.85);
         }
+        
+        /* Smooth Slide Animation for Header */
+        #mainHeader {
+            transition: transform 0.3s ease-in-out;
+        }
+        .header-hidden {
+            transform: translateY(-100%);
+        }
+
         /* Custom Cute Pop-up Animation */
         @keyframes modalPop {
             0% { transform: scale(0.9); opacity: 0; }
@@ -43,9 +52,9 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-12 transition-colors duration-300">
 
-    <!-- Header ล็อกติดด้านบน -->
-    <header class="bg-white dark:bg-slate-800 border-b dark:border-slate-700 sticky top-0 z-20 shadow-xs transition-colors duration-300">
-        <div class="max-w-3xl mx-auto px-4 py-3 space-y-3">
+    <!-- Header ล็อกติดด้านบน แบบ Slide Hide-on-Scroll -->
+    <header id="mainHeader" class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b dark:border-slate-700/80 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-3xl mx-auto px-4 py-2.5 space-y-2">
             
             <!-- บรรทัดที่ 1 -->
             <div class="flex justify-between items-center gap-2">
@@ -54,16 +63,16 @@
                     <h1 class="font-bold text-base text-slate-900 dark:text-white">OH stock</h1>
                 </div>
                 
-                <div class="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                <div class="flex bg-slate-100 dark:bg-slate-700/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-600">
                     <button id="btnDaily" onclick="switchMode('daily')" class="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition">Daily</button>
                     <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">Weekly</button>
                 </div>
 
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition">
+                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition border border-slate-200/50 dark:border-slate-600">
                         <span id="themeIcon">🌙</span>
                     </button>
-                    <button onclick="toggleMenu()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 px-2.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition">
+                    <button onclick="toggleMenu()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 px-2.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition border border-slate-200/50 dark:border-slate-600">
                         ☰
                     </button>
                 </div>
@@ -71,7 +80,7 @@
 
             <!-- บรรทัดที่ 2: สถานะการนับ -->
             <div class="pt-1 border-t border-slate-100 dark:border-slate-700/60">
-                <div class="flex justify-between items-center text-xs">
+                <div class="flex justify-between items-center text-[11px]">
                     <div class="flex items-center gap-2.5 sm:gap-3">
                         <span class="font-medium text-slate-500 dark:text-slate-400">📊 การนับ:</span>
                         <span class="font-bold text-emerald-600 dark:text-emerald-400">นับเสร็จ: <span id="countDone">0</span></span>
@@ -84,14 +93,14 @@
             </div>
 
             <!-- บรรทัดที่ 3: ช่องค้นหา & ปุ่มกรองสถานะ -->
-            <div class="space-y-2">
+            <div class="space-y-1.5">
                 <input type="text" id="searchInput" oninput="renderList()" placeholder="🔍 ค้นหารหัส หรือ ชื่อสินค้า..." 
-                    class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
+                    class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
                 
                 <div class="flex gap-1">
-                    <button id="filterAll" onclick="setFilter('all')" class="flex-1 py-1.5 text-xs rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium">ทั้งหมด</button>
-                    <button id="filterPending" onclick="setFilter('pending')" class="flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">⏳ รอนับ / ยังไม่ครบ</button>
-                    <button id="filterDone" onclick="setFilter('done')" class="flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">✅ นับเสร็จแล้ว</button>
+                    <button id="filterAll" onclick="setFilter('all')" class="flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium">ทั้งหมด</button>
+                    <button id="filterPending" onclick="setFilter('pending')" class="flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">⏳ รอนับ / ไม่ครบ</button>
+                    <button id="filterDone" onclick="setFilter('done')" class="flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">✅ นับเสร็จแล้ว</button>
                 </div>
             </div>
 
@@ -100,8 +109,8 @@
 
         </div>
         
-        <div class="bg-slate-200 dark:bg-slate-700 h-1.5 w-full">
-            <div id="progressBar" class="bg-emerald-500 h-1.5 transition-all duration-500" style="width: 0%"></div>
+        <div class="bg-slate-200 dark:bg-slate-700 h-1 w-full">
+            <div id="progressBar" class="bg-emerald-500 h-1 transition-all duration-500" style="width: 0%"></div>
         </div>
     </header>
 
@@ -128,15 +137,15 @@
             </div>
 
             <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">
-                OH stock System v2.1
+                OH stock System v2.2
             </div>
         </div>
     </div>
 
-    <!-- 🌟 Custom Cute Popup / Toast กลางจอ 🌟 -->
+    <!-- 🌟 Custom Cute Popup กลางจอ 🌟 -->
     <div id="cuteModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl max-w-xs w-full text-center space-y-4 border border-slate-100 dark:border-slate-700 animate-pop">
-            <div id="modalIcon" class="text-4xl">✨</div>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-xs w-full text-center space-y-3 border border-slate-100 dark:border-slate-700 animate-pop">
+            <div id="modalIcon" class="text-3xl">✨</div>
             <div class="space-y-1">
                 <h3 id="modalTitle" class="font-bold text-sm text-slate-800 dark:text-slate-100">แจ้งเตือน</h3>
                 <p id="modalMessage" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">ข้อความรายละเอียด...</p>
@@ -149,8 +158,8 @@
     </div>
 
     <!-- รายการสินค้า -->
-    <main class="max-w-3xl mx-auto p-4 space-y-3">
-        <div id="stockList" class="space-y-3"></div>
+    <main class="max-w-3xl mx-auto p-3 space-y-2.5">
+        <div id="stockList" class="space-y-2.5"></div>
     </main>
 
     <!-- Firebase SDK Modular -->
@@ -180,7 +189,54 @@
         let lastCompletedCount = 0;
         let stockItems = [];
 
-        // ฟังก์ชัน Popup น่ารักๆ กลางจอ
+        // --- 🌙 1. บันทึกและดึงค่า Dark Mode ล่าสุด ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem('oh_stock_theme') || 'light';
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+
+            if (savedTheme === 'dark') {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                if (icon) icon.innerText = "☀️";
+            } else {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                if (icon) icon.innerText = "🌙";
+            }
+        }
+
+        window.toggleDarkMode = function() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            if (html.classList.contains('light')) {
+                html.classList.remove('light'); html.classList.add('dark');
+                icon.innerText = "☀️";
+                localStorage.setItem('oh_stock_theme', 'dark');
+            } else {
+                html.classList.remove('dark'); html.classList.add('light');
+                icon.innerText = "🌙";
+                localStorage.setItem('oh_stock_theme', 'light');
+            }
+        };
+
+        // --- 📱 2. Header Slide Hide-on-Scroll Logic ---
+        let lastScrollY = window.scrollY;
+        const mainHeader = document.getElementById('mainHeader');
+
+        window.addEventListener('scroll', () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > 60 && currentScrollY > lastScrollY) {
+                // เลื่อนลง -> ซ่อน Header
+                mainHeader.classList.add('header-hidden');
+            } else {
+                // เลื่อนขึ้น -> โชว์ Header
+                mainHeader.classList.remove('header-hidden');
+            }
+            lastScrollY = currentScrollY;
+        });
+
+        // --- 🌟 3. Custom Popup Modal ---
         window.showCuteModal = function({ icon = '✨', title = 'แจ้งเตือน', message = '', showCancel = false, onConfirm = null }) {
             const modal = document.getElementById('cuteModal');
             document.getElementById('modalIcon').innerText = icon;
@@ -208,6 +264,7 @@
             document.getElementById('cuteModal').classList.add('hidden');
         };
 
+        // --- 🔄 4. Realtime & Operations ---
         function listenToFirebase() {
             const stockRef = ref(db, `stock_${currentMode}`);
             onValue(stockRef, (snapshot) => {
@@ -243,7 +300,7 @@
                     }
                 } catch (err) {
                     console.error(err);
-                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheetsได้ กรุณาลองใหม่อีกครั้ง' });
+                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheets ได้ กรุณาลองใหม่อีกครั้ง' });
                 }
             };
 
@@ -273,9 +330,9 @@
             ['all', 'pending', 'done'].forEach(f => {
                 const btn = document.getElementById(`filter${f.charAt(0).toUpperCase() + f.slice(1)}`);
                 if (f === filter) {
-                    btn.className = "flex-1 py-1.5 text-xs rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium";
+                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium";
                 } else {
-                    btn.className = "flex-1 py-1.5 text-xs rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
                 }
             });
             renderList();
@@ -332,13 +389,14 @@
 
             categories.forEach(cat => {
                 const btn = document.createElement("button");
-                btn.className = `px-3 py-1.5 rounded-lg border text-xs whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`;
+                btn.className = `px-2.5 py-1 rounded-lg border text-[11px] whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`;
                 btn.innerText = cat;
                 btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); };
                 container.appendChild(btn);
             });
         }
 
+        // --- 🎨 5. Render List พร้อมปรับ Contrast ช่องกรอก & Compact Footer ---
         window.renderList = function() {
             const container = document.getElementById("stockList");
             if (!container) return;
@@ -359,7 +417,7 @@
             updateProgressAndUI();
 
             if (items.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">ไม่พบรายการสินค้า</div>`;
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">ไม่พบรายการสินค้า</div>`;
                 return;
             }
 
@@ -377,23 +435,23 @@
                 const totalFrac = f1Val + finalFrac2;
                 const status = getStatusType(item);
 
-                // เช็คว่าต้องแสดงกี่ช่อง (frac2 หรือ tare > 0 ให้แสดง 3 ช่อง, นอกนั้นแสดง 2 ช่อง)
+                // เช็คประเภทว่าต้องใช้ 3 ช่อง หรือ 2 ช่อง
                 const isNeedTare = cleanType === 'frac2' || (item.tare && item.tare > 0);
 
                 const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && 
                                   (item.today?.frac1 === 0 || item.today?.frac1 === "0") && 
                                   (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
 
-                let cardBg = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
+                let cardBg = 'bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700/80';
                 let badgeClass = 'text-slate-400 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600';
                 let badgeText = '⏳ รอนับ';
 
                 if (status === 'incomplete') {
-                    cardBg = 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50';
+                    cardBg = 'bg-amber-50/30 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50';
                     badgeClass = 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700';
-                    badgeText = '⏳ ยังไม่ครบ';
+                    badgeText = '⏳ ไม่ครบ';
                 } else if (status === 'done') {
-                    cardBg = 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700';
+                    cardBg = 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-700/80';
                     badgeClass = 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-700 font-semibold';
                     badgeText = '✅ นับเสร็จแล้ว';
                 }
@@ -402,60 +460,64 @@
 
                 const card = document.createElement("div");
                 card.id = `card_${originalIdx}`;
-                card.className = `p-4 rounded-xl border transition duration-200 shadow-xs ${cardBg}`;
+                card.className = `p-3 sm:p-3.5 rounded-xl border transition duration-200 shadow-2xs ${cardBg}`;
                 
-                // สลับแสดง Grid 2 ช่อง หรือ 3 ช่องตามการตัดกระปุก
                 const gridClass = isNeedTare ? "grid-cols-3" : "grid-cols-2";
+
+                // CSS สำหรับช่องพิมพ์ให้โดดเด่น (High Contrast)
+                const inputStyle = "w-full border-2 border-slate-300 dark:border-slate-500 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-bold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner transition";
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2 mb-2">
                         <div>
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${item.id}</span>
-                                <span class="text-[10px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-200">📌 ${typeLabel}</span>
-                                ${item.tare > 0 ? `<span class="text-[10px] text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-200">✂️ ตัดกระปุก: -${item.tare}</span>` : ''}
-                                <span class="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-1.5 py-0.5 rounded">${item.category}</span>
+                            <div class="flex items-center gap-1 flex-wrap">
+                                <span class="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/80 px-1.5 py-0.5 rounded border border-slate-200/50 dark:border-slate-600">${item.id}</span>
+                                <span class="text-[9px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 rounded border border-indigo-200/80 dark:border-indigo-800">📌 ${typeLabel}</span>
+                                ${item.tare > 0 ? `<span class="text-[9px] text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-1.5 py-0.5 rounded border border-rose-200/80 dark:border-rose-800">✂️ -${item.tare}</span>` : ''}
+                                <span class="text-[9px] text-slate-400 bg-slate-50 dark:bg-slate-700/30 px-1.5 py-0.5 rounded">${item.category}</span>
                             </div>
-                            <h2 class="text-xs sm:text-sm font-medium text-slate-900 dark:text-white mt-1">${item.name} (${item.unit})</h2>
+                            <h2 class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mt-1 leading-snug">${item.name} (${item.unit})</h2>
                         </div>
-                        <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1">
+                        <span id="badge_${originalIdx}" class="${badgeClass} text-[9px] px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1">
                             ${badgeText}
                         </span>
                     </div>
 
+                    <!-- ช่องกรอกแบบ High-Contrast เด่นชัดขึ้น -->
                     <div class="grid ${gridClass} gap-2 mb-2">
                         <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">จำนวนเต็ม</span>
-                            <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                            <span class="text-[9px] font-medium text-slate-500 dark:text-slate-400 block mb-0.5">จำนวนเต็ม</span>
+                            <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="${inputStyle}" placeholder="0">
                         </div>
                         
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
-                            <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                            <span class="text-[9px] font-medium text-slate-500 dark:text-slate-400 block mb-0.5">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
+                            <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="${inputStyle}" placeholder="0">
                         </div>
 
                         ${isNeedTare ? `
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษกระปุก</span>
-                            <input type="number" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                            <span class="text-[9px] font-medium text-slate-500 dark:text-slate-400 block mb-0.5">เศษกระปุก</span>
+                            <input type="number" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="${inputStyle}" placeholder="0">
                         </div>
                         ` : ''}
                     </div>
 
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2.5 border-t border-slate-200/60 dark:border-slate-700 gap-2">
-                        <div class="flex gap-1.5">
-                            <button onclick="setAsYst(${originalIdx})" class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md text-[11px] font-medium transition">
-                                ↺ ใช้ค่ายอดเมื่อวาน
+                    <!-- Compact Footer: เล็กลง กระชับ สบายตา -->
+                    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 border-t border-slate-200/50 dark:border-slate-700/60 gap-1.5">
+                        <div class="flex gap-1.5 shrink-0">
+                            <button onclick="setAsYst(${originalIdx})" class="flex-1 sm:flex-none bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/60 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-medium transition">
+                                ↺ ยอดเมื่อวาน
                             </button>
-                            <button onclick="setAsZero(${originalIdx})" class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-rose-50 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-md text-[11px] font-medium transition">
-                                ✕ กำหนดของหมด (0)
+                            <button onclick="setAsZero(${originalIdx})" class="flex-1 sm:flex-none bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/60 px-2 py-0.5 rounded text-[10px] font-medium transition">
+                                ✕ ของหมด (0)
                             </button>
                         </div>
                         
-                        <div class="flex items-center gap-3 text-[11px] flex-wrap">
-                            <span class="text-slate-400 font-mono">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
-                            <span class="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-100/70 dark:bg-emerald-900/40 px-2.5 py-1 rounded-md border border-emerald-200 font-mono">
-                                ( เต็ม : ${fFullVal} | เศษรวม : ${totalFrac} )
+                        <div class="flex items-center justify-between sm:justify-end gap-2 text-[10px] flex-wrap">
+                            <span class="text-slate-400 font-mono text-[9px]">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
+                            <span class="text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100/60 dark:bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-200/80 dark:border-emerald-800/80 font-mono text-[10px]">
+                                ( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )
                             </span>
                         </div>
                     </div>
@@ -540,21 +602,13 @@
             });
         };
 
-        window.toggleDarkMode = function() {
-            const html = document.documentElement;
-            const icon = document.getElementById('themeIcon');
-            if (html.classList.contains('light')) {
-                html.classList.remove('light'); html.classList.add('dark'); icon.innerText = "☀️";
-            } else {
-                html.classList.remove('dark'); html.classList.add('light'); icon.innerText = "🌙";
-            }
-        };
-
         window.toggleMenu = function() {
             const drawer = document.getElementById('menuDrawer');
             drawer.classList.toggle('hidden');
         };
 
+        // เริ่มการดึงค่า Dark Mode และฟังค่า Firebase
+        initTheme();
         listenToFirebase();
     </script>
 </body>
