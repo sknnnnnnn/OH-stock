@@ -33,28 +33,32 @@
             background-color: rgba(15, 23, 42, 0.8);
             color: rgba(248, 113, 113, 0.7);
         }
+        /* Custom Cute Pop-up Animation */
+        @keyframes modalPop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: modalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-12 transition-colors duration-300">
 
-    <!-- Header แบบ Sticky ล็อกติดด้านบน -->
+    <!-- Header ล็อกติดด้านบน -->
     <header class="bg-white dark:bg-slate-800 border-b dark:border-slate-700 sticky top-0 z-20 shadow-xs transition-colors duration-300">
         <div class="max-w-3xl mx-auto px-4 py-3 space-y-3">
             
-            <!-- บรรทัดที่ 1: ชื่อระบบ, โหมด, ปุ่ม Dark Mode, ปุ่ม 3 ขีด -->
+            <!-- บรรทัดที่ 1 -->
             <div class="flex justify-between items-center gap-2">
                 <div class="flex items-center gap-1.5 shrink-0">
                     <span class="text-xl">🧋</span>
                     <h1 class="font-bold text-base text-slate-900 dark:text-white">OH stock</h1>
                 </div>
                 
-                <!-- โหมด Daily / Weekly -->
                 <div class="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
                     <button id="btnDaily" onclick="switchMode('daily')" class="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition">Daily</button>
                     <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">Weekly</button>
                 </div>
 
-                <!-- มุมขวา: ปุ่ม Dark Mode และ เมนู 3 ขีด -->
                 <div class="flex items-center gap-1.5 shrink-0">
                     <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition">
                         <span id="themeIcon">🌙</span>
@@ -65,7 +69,7 @@
                 </div>
             </div>
 
-            <!-- บรรทัดที่ 2: ตัวเลขสรุปสถานะการนับ -->
+            <!-- บรรทัดที่ 2: สถานะการนับ -->
             <div class="pt-1 border-t border-slate-100 dark:border-slate-700/60">
                 <div class="flex justify-between items-center text-xs">
                     <div class="flex items-center gap-2.5 sm:gap-3">
@@ -96,14 +100,13 @@
 
         </div>
         
-        <!-- หลอด Progress Bar -->
         <div class="bg-slate-200 dark:bg-slate-700 h-1.5 w-full">
             <div id="progressBar" class="bg-emerald-500 h-1.5 transition-all duration-500" style="width: 0%"></div>
         </div>
     </header>
 
-    <!-- Side Drawer เมนูย่อย (เปิดเมื่อกดปุ่ม 3 ขีด) -->
-    <div id="menuDrawer" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden transition-opacity duration-300" onclick="toggleMenu()">
+    <!-- Side Drawer เมนูย่อย -->
+    <div id="menuDrawer" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs hidden transition-opacity duration-300" onclick="toggleMenu()">
         <div class="absolute right-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-800 p-5 shadow-2xl flex flex-col justify-between" onclick="event.stopPropagation()">
             <div class="space-y-4">
                 <div class="flex justify-between items-center border-b dark:border-slate-700 pb-3">
@@ -125,7 +128,22 @@
             </div>
 
             <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">
-                OH stock System v2.0
+                OH stock System v2.1
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌟 Custom Cute Popup / Toast กลางจอ 🌟 -->
+    <div id="cuteModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl max-w-xs w-full text-center space-y-4 border border-slate-100 dark:border-slate-700 animate-pop">
+            <div id="modalIcon" class="text-4xl">✨</div>
+            <div class="space-y-1">
+                <h3 id="modalTitle" class="font-bold text-sm text-slate-800 dark:text-slate-100">แจ้งเตือน</h3>
+                <p id="modalMessage" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">ข้อความรายละเอียด...</p>
+            </div>
+            <div id="modalActions" class="flex gap-2 pt-2">
+                <button id="modalBtnOk" onclick="closeCuteModal()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium py-2 rounded-xl transition shadow-xs">ตกลง</button>
+                <button id="modalBtnCancel" onclick="closeCuteModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium py-2 rounded-xl transition hidden">ยกเลิก</button>
             </div>
         </div>
     </div>
@@ -162,6 +180,34 @@
         let lastCompletedCount = 0;
         let stockItems = [];
 
+        // ฟังก์ชัน Popup น่ารักๆ กลางจอ
+        window.showCuteModal = function({ icon = '✨', title = 'แจ้งเตือน', message = '', showCancel = false, onConfirm = null }) {
+            const modal = document.getElementById('cuteModal');
+            document.getElementById('modalIcon').innerText = icon;
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            
+            const btnCancel = document.getElementById('modalBtnCancel');
+            const btnOk = document.getElementById('modalBtnOk');
+
+            if (showCancel) {
+                btnCancel.classList.remove('hidden');
+            } else {
+                btnCancel.classList.add('hidden');
+            }
+
+            btnOk.onclick = () => {
+                closeCuteModal();
+                if (onConfirm) onConfirm();
+            };
+
+            modal.classList.remove('hidden');
+        };
+
+        window.closeCuteModal = function() {
+            document.getElementById('cuteModal').classList.add('hidden');
+        };
+
         function listenToFirebase() {
             const stockRef = ref(db, `stock_${currentMode}`);
             onValue(stockRef, (snapshot) => {
@@ -178,26 +224,39 @@
             });
         }
 
-        window.fetchFromSheetsAndSyncFirebase = async function(isInitial = false) {
-            if (!isInitial && !confirm("🔄 ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่?")) return;
+        window.fetchFromSheetsAndSyncFirebase = function(isInitial = false) {
+            const doFetch = async () => {
+                showCuteModal({ icon: '⏳', title: 'กำลังโหลดข้อมูล', message: 'กำลังดึงรายการสินค้าล่าสุดจาก Google Sheets...' });
+                try {
+                    const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
+                    const rawData = await response.json();
 
-            try {
-                const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
-                const rawData = await response.json();
-
-                if (Array.isArray(rawData) && rawData.length > 0) {
-                    const formattedData = rawData.map(item => {
-                        item.count_type = item.count_type ? item.count_type.toString().trim().toLowerCase() : 'both';
-                        if (!item.today) item.today = { full: "", frac1: "", frac2: "" };
-                        return item;
-                    });
-                    
-                    await set(ref(db, `stock_${currentMode}`), formattedData);
-                    alert("✅ อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อย!");
+                    if (Array.isArray(rawData) && rawData.length > 0) {
+                        const formattedData = rawData.map(item => {
+                            item.count_type = item.count_type ? item.count_type.toString().trim().toLowerCase() : 'both';
+                            if (!item.today) item.today = { full: "", frac1: "", frac2: "" };
+                            return item;
+                        });
+                        
+                        await set(ref(db, `stock_${currentMode}`), formattedData);
+                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อยแล้ว' });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheetsได้ กรุณาลองใหม่อีกครั้ง' });
                 }
-            } catch (err) {
-                console.error(err);
-                alert("❌ เกิดข้อผิดพลาดในการดึงข้อมูลจาก Sheets");
+            };
+
+            if (!isInitial) {
+                showCuteModal({
+                    icon: '🔄',
+                    title: 'ยืนยันการอัปเดต',
+                    message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่?',
+                    showCancel: true,
+                    onConfirm: doFetch
+                });
+            } else {
+                doFetch();
             }
         };
 
@@ -318,9 +377,12 @@
                 const totalFrac = f1Val + finalFrac2;
                 const status = getStatusType(item);
 
+                // เช็คว่าต้องแสดงกี่ช่อง (frac2 หรือ tare > 0 ให้แสดง 3 ช่อง, นอกนั้นแสดง 2 ช่อง)
+                const isNeedTare = cleanType === 'frac2' || (item.tare && item.tare > 0);
+
                 const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && 
                                   (item.today?.frac1 === 0 || item.today?.frac1 === "0") && 
-                                  (item.today?.frac2 === 0 || item.today?.frac2 === "0");
+                                  (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
 
                 let cardBg = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
                 let badgeClass = 'text-slate-400 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600';
@@ -336,12 +398,15 @@
                     badgeText = '✅ นับเสร็จแล้ว';
                 }
 
-                let typeLabel = cleanType === 'frac' ? "นับเศษ" : cleanType === 'frac2' ? "นับเศษ (2 ช่อง)" : "นับเต็มและเศษ";
+                let typeLabel = isNeedTare ? "นับเศษ (ตัดกระปุก)" : (cleanType === 'frac' ? "นับเศษ" : "นับเต็มและเศษ");
 
                 const card = document.createElement("div");
                 card.id = `card_${originalIdx}`;
                 card.className = `p-4 rounded-xl border transition duration-200 shadow-xs ${cardBg}`;
                 
+                // สลับแสดง Grid 2 ช่อง หรือ 3 ช่องตามการตัดกระปุก
+                const gridClass = isNeedTare ? "grid-cols-3" : "grid-cols-2";
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2 mb-2">
                         <div>
@@ -358,21 +423,23 @@
                         </span>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2 mb-2">
+                    <div class="grid ${gridClass} gap-2 mb-2">
                         <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">จำนวนเต็ม</span>
                             <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
                         
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษปกติ</span>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
                             <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
 
+                        ${isNeedTare ? `
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษกระปุก</span>
                             <input type="number" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
+                        ` : ''}
                     </div>
 
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2.5 border-t border-slate-200/60 dark:border-slate-700 gap-2">
@@ -427,36 +494,50 @@
         };
 
         window.startNewDay = function() {
-            if (confirm("🌅 ต้องการเริ่มรอบวันใหม่ใช่หรือไม่?\n(ค่ายอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวานบน Firebase)")) {
-                const newItems = stockItems.map(item => {
-                    item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
-                    item.today = { full: "", frac1: "", frac2: "" };
-                    return item;
-                });
-                set(ref(db, `stock_${currentMode}`), newItems);
-            }
+            showCuteModal({
+                icon: '🌅',
+                title: 'เริ่มรอบวันใหม่',
+                message: 'ต้องการเริ่มรอบวันใหม่ใช่หรือไม่? (ยอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวาน)',
+                showCancel: true,
+                onConfirm: () => {
+                    const newItems = stockItems.map(item => {
+                        item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
+                        item.today = { full: "", frac1: "", frac2: "" };
+                        return item;
+                    });
+                    set(ref(db, `stock_${currentMode}`), newItems);
+                    showCuteModal({ icon: '✨', title: 'สำเร็จ!', message: 'เริ่มรอบวันใหม่เรียบร้อยแล้ว' });
+                }
+            });
         };
 
         window.submitToGoogleSheets = async function() {
             const completedItems = stockItems.filter(item => getStatusType(item) === 'done');
             if (completedItems.length === 0) {
-                alert("⚠️ ยังไม่มีรายการที่นับเสร็จแล้ว");
+                showCuteModal({ icon: '⚠️', title: 'ยังส่งไม่ได้', message: 'ยังไม่มีรายการสินค้าที่นับเสร็จสมบูรณ์เลยค่ะ' });
                 return;
             }
 
-            if (!confirm(`📤 ต้องการส่งข้อมูล ${completedItems.length} รายการ ไปยัง Google Sheets ใช่หรือไม่?`)) return;
-
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode: currentMode, items: completedItems })
-                });
-                alert(`✅ ส่งข้อมูลเรียบร้อยแล้ว!`);
-            } catch (error) {
-                alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล");
-            }
+            showCuteModal({
+                icon: '📤',
+                title: 'ยืนยันการส่งข้อมูล',
+                message: `ต้องการส่งข้อมูลสินค้า ${completedItems.length} รายการ เข้าสู่ Google Sheets ใช่หรือไม่?`,
+                showCancel: true,
+                onConfirm: async () => {
+                    showCuteModal({ icon: '⏳', title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets...' });
+                    try {
+                        await fetch(WEB_APP_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ mode: currentMode, items: completedItems })
+                        });
+                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
+                    } catch (error) {
+                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาตรวจสอบอินเทอร์เน็ต' });
+                    }
+                }
+            });
         };
 
         window.toggleDarkMode = function() {
