@@ -351,7 +351,6 @@
                 if (calcExpr) {
                     try {
                         const fullExpr = calcExpr + calcVal;
-                        // Safe evaluation
                         const result = Function(`'use strict'; return (${fullExpr})`)();
                         calcVal = (Math.round(result * 100) / 100).toString();
                         calcExpr = "";
@@ -402,9 +401,23 @@
 
                     if (Array.isArray(rawData) && rawData.length > 0) {
                         const formattedData = rawData.map(item => {
-                            item.count_type = item.count_type ? item.count_type.toString().trim().toLowerCase() : 'both';
-                            if (!item.today) item.today = { full: "", frac1: "", frac2: "" };
-                            return item;
+                            return {
+                                id: item.id || "",
+                                name: item.name || "",
+                                category: item.category || "ทั่วไป",
+                                unit: item.unit || "หน่วย",
+                                count_type: item.count_type ? item.count_type.toString().trim().toLowerCase() : 'both',
+                                tare: parseFloat(item.tare) || 0,
+                                yst: {
+                                    full: item.yst?.full ?? 0,
+                                    frac: item.yst?.frac ?? 0
+                                },
+                                today: {
+                                    full: item.today?.full ?? "",
+                                    frac1: item.today?.frac1 ?? "",
+                                    frac2: item.today?.frac2 ?? ""
+                                }
+                            };
                         });
                         
                         await set(ref(db, `stock_${currentMode}`), formattedData);
@@ -497,7 +510,7 @@
             const container = document.getElementById("categoryContainer");
             if (!container) return;
             container.innerHTML = "";
-            const categories = ["ทั้งหมด", ...new Set(stockItems.map(i => i.category))];
+            const categories = ["ทั้งหมด", ...new Set(stockItems.map(i => i.category || "ทั่วไป"))];
 
             categories.forEach(cat => {
                 const btn = document.createElement("button");
@@ -508,7 +521,7 @@
             });
         }
 
-        // --- 🎨 6. Render List พร้อมปรับสีเด่นชัด & ปุ่มเครื่องคิดเลขประจำช่องเศษ ---
+        // --- 🎨 6. Render List ---
         window.renderList = function() {
             const container = document.getElementById("stockList");
             if (!container) return;
@@ -516,8 +529,9 @@
             const searchVal = document.getElementById("searchInput")?.value.toLowerCase() || "";
 
             let items = stockItems.filter(item => {
-                const matchCategory = selectedCategory === 'ทั้งหมด' || item.category === selectedCategory;
-                const matchSearch = item.id.toLowerCase().includes(searchVal) || item.name.toLowerCase().includes(searchVal);
+                const itemCat = item.category || "ทั่วไป";
+                const matchCategory = selectedCategory === 'ทั้งหมด' || itemCat === selectedCategory;
+                const matchSearch = (item.id || "").toLowerCase().includes(searchVal) || (item.name || "").toLowerCase().includes(searchVal);
                 if (!matchCategory || !matchSearch) return false;
                 
                 const status = getStatusType(item);
@@ -553,7 +567,6 @@
                                   (item.today?.frac1 === 0 || item.today?.frac1 === "0") && 
                                   (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
 
-                // 🎨 ปรับสีขอบและพื้นหลังให้สดเด่นมากๆ
                 let cardBg = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
                 let badgeClass = 'text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600';
                 let badgeText = '⏳ รอนับ';
@@ -576,7 +589,6 @@
                 
                 const gridClass = isNeedTare ? "grid-cols-3" : "grid-cols-2";
 
-                // CSS ช่องกรอก High Contrast
                 const inputStyle = "w-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-bold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner transition";
 
                 card.innerHTML = `
@@ -586,25 +598,25 @@
                                 <span class="font-mono text-[10px] text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded font-medium">${item.id}</span>
                                 <span class="text-[9px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">📌 ${typeLabel}</span>
                                 ${item.tare > 0 ? `<span class="text-[9px] text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-800">✂️ -${item.tare}</span>` : ''}
-                                <span class="text-[9px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-1.5 py-0.5 rounded">${item.category}</span>
+                                <span class="text-[9px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-1.5 py-0.5 rounded">${item.category || 'ทั่วไป'}</span>
                             </div>
-                            <h2 class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mt-1 leading-snug">${item.name} (${item.unit})</h2>
+                            <h2 class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mt-1 leading-snug">${item.name}</h2>
                         </div>
                         <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1">
                             ${badgeText}
                         </span>
                     </div>
 
-                    <!-- ช่องกรอกแบบ High-Contrast พร้อมปุ่ม 🧮 เฉพาะช่องเศษ -->
+                    <!-- ช่องกรอกแบบ High-Contrast -->
                     <div class="grid ${gridClass} gap-2 mb-2">
                         
-                        <!-- 1. ช่องจำนวนเต็ม (ไม่มีปุ่ม 🧮) -->
+                        <!-- 1. ช่องจำนวนเต็ม -->
                         <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300 block mb-0.5">จำนวนเต็ม</span>
                             <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="${inputStyle}" placeholder="0">
                         </div>
                         
-                        <!-- 2. ช่องเศษปกติ (มีปุ่ม 🧮) -->
+                        <!-- 2. ช่องเศษปกติ -->
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <div class="flex justify-between items-center mb-0.5">
                                 <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
@@ -613,7 +625,7 @@
                             <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="${inputStyle}" placeholder="0">
                         </div>
 
-                        <!-- 3. ช่องเศษกระปุก (ถ้ามี - มีปุ่ม 🧮) -->
+                        <!-- 3. ช่องเศษกระปุก -->
                         ${isNeedTare ? `
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <div class="flex justify-between items-center mb-0.5">
@@ -625,7 +637,7 @@
                         ` : ''}
                     </div>
 
-                    <!-- Compact Footer: กระชับ พื้นที่ไม่ดันการ์ด -->
+                    <!-- Compact Footer -->
                     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 border-t border-slate-200 dark:border-slate-700/60 gap-1.5">
                         <div class="flex gap-1.5 shrink-0">
                             <button onclick="setAsYst(${originalIdx})" class="flex-1 sm:flex-none bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-medium transition">
@@ -710,15 +722,19 @@
                 onConfirm: async () => {
                     showCuteModal({ icon: '⏳', title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets...' });
                     try {
-                        await fetch(WEB_APP_URL, {
+                        const response = await fetch(WEB_APP_URL, {
                             method: 'POST',
-                            mode: 'no-cors',
-                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ mode: currentMode, items: completedItems })
                         });
-                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
+                        const result = await response.json();
+                        
+                        if (result.status === 'success') {
+                            showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
+                        } else {
+                            showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: result.message || 'ไม่สามารถส่งข้อมูลได้' });
+                        }
                     } catch (error) {
-                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาตรวจสอบอินเทอร์เน็ต' });
+                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต' });
                     }
                 }
             });
