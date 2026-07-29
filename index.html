@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OH stock</title>
+    <title>OH stock - Realtime Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
@@ -50,7 +50,7 @@
                 <div class="flex items-center gap-2">
                     <span class="text-xl">🧋</span>
                     <h1 class="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">OH stock</h1>
-                    <span id="saveStatus" class="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">💾 จำข้อมูลในเครื่องแล้ว</span>
+                    <span id="syncStatus" class="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200">⏳ กำลังเชื่อมต่อ...</span>
                 </div>
                 
                 <div class="flex items-center gap-2">
@@ -59,7 +59,7 @@
                         <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">Weekly</button>
                     </div>
 
-                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition" title="สลับโหมดสว่าง/มืด">
+                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition">
                         <span id="themeIcon">🌙</span>
                     </button>
                 </div>
@@ -100,7 +100,7 @@
 
         <div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 flex flex-wrap gap-2 justify-between items-center">
             <div class="flex flex-wrap gap-1.5 w-full">
-                <button onclick="confirmResetLocalData()" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition">
+                <button onclick="fetchFromSheetsAndSyncFirebase()" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition">
                     🔄 อัปเดตรายการสินค้าจาก Sheets
                 </button>
                 <button onclick="submitToGoogleSheets()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 shadow-xs transition">
@@ -116,111 +116,93 @@
 
     </main>
 
-    <div id="calcModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border dark:border-slate-700 p-4 w-72">
-            <div class="flex justify-between items-center mb-2 pb-1 border-b dark:border-slate-700">
-                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200" id="calcTitle">เครื่องคิดเลขเศษ</span>
-                <button onclick="closeCalculator()" class="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
-            </div>
-            <input type="text" id="calcDisplay" readonly class="w-full bg-slate-50 dark:bg-slate-900 text-right p-2 rounded-lg text-lg font-mono mb-3 border dark:border-slate-700 text-slate-800 dark:text-slate-100" value="0">
-            <div class="grid grid-cols-4 gap-1.5 text-sm">
-                <button onclick="calcClear()" class="bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 p-2 rounded-lg font-medium">C</button>
-                <button onclick="calcAppend('/')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">÷</button>
-                <button onclick="calcAppend('*')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">×</button>
-                <button onclick="calcBack()" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">⌫</button>
-                <button onclick="calcAppend('7')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">7</button>
-                <button onclick="calcAppend('8')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">8</button>
-                <button onclick="calcAppend('9')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">9</button>
-                <button onclick="calcAppend('-')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">-</button>
-                <button onclick="calcAppend('4')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">4</button>
-                <button onclick="calcAppend('5')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">5</button>
-                <button onclick="calcAppend('6')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">6</button>
-                <button onclick="calcAppend('+')" class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg">+</button>
-                <button onclick="calcAppend('1')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">1</button>
-                <button onclick="calcAppend('2')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">2</button>
-                <button onclick="calcAppend('3')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">3</button>
-                <button onclick="calcApply()" class="row-span-2 bg-emerald-600 text-white rounded-lg font-medium flex items-center justify-center text-xs shadow-sm">ตกลง</button>
-                <button onclick="calcAppend('0')" class="col-span-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">0</button>
-                <button onclick="calcAppend('.')" class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg">.</button>
-            </div>
-        </div>
-    </div>
+    <!-- Firebase SDK Modular -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    <script>
+        // Firebase Config ของคุณ oj-stock-a6af4
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRQW8NeX4P4VjDLFrjZXx8S8XOyA47I58",
+            authDomain: "oj-stock-a6af4.firebaseapp.com",
+            databaseURL: "https://oj-stock-a6af4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "oj-stock-a6af4",
+            storageBucket: "oj-stock-a6af4.firebasestorage.app",
+            messagingSenderId: "916746183266",
+            appId: "1:916746183266:web:85325fdf4e87313db6673b",
+            measurementId: "G-LTGJR4QFW5"
+        };
+
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzHaL8Ec89aJuRAnxtkFDZMKLOjBE3zeKCqXOOOOxo-VIAR3OWNDt2RLs4o4G4tAb8/exec";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
         let currentMode = 'daily';
         let currentFilter = 'all';
         let selectedCategory = 'ทั้งหมด';
-        let activeInputId = null;
         let lastCompletedCount = 0;
+        let stockItems = [];
 
-        let dataSets = {
-            daily: [],
-            weekly: []
-        };
+        const statusEl = document.getElementById("syncStatus");
 
-        // บันทึกลงความจำตัวเครื่อง LocalStorage
-        function saveToLocalStorage() {
-            localStorage.setItem(`oh_stock_v2_${currentMode}`, JSON.stringify(dataSets[currentMode]));
-        }
-
-        // โหลดข้อมูล (จะดึงจากเครื่องก่อนเสมอ พอกดรีเฟรชค่าเลยไม่หาย)
-        async function loadStockData(forceRefresh = false) {
-            const stockListEl = document.getElementById("stockList");
-            const savedLocalData = localStorage.getItem(`oh_stock_v2_${currentMode}`);
-
-            // ถ้ามีข้อมูลในเครื่องแล้ว และไม่ใช่การกดปุ่มบังคับดึงใหม่ ให้ใช้ของเก่าในเครื่องเลย
-            if (savedLocalData && !forceRefresh) {
-                dataSets[currentMode] = JSON.parse(savedLocalData);
+        // คอยดึงข้อมูลจาก Firebase แบบ Realtime (มีคนแก้ไขปุ๊บ ข้อมูลอัปเดตทุกเครื่องทันที)
+        function listenToFirebase() {
+            const stockRef = ref(db, `stock_${currentMode}`);
+            onValue(stockRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    stockItems = Array.isArray(data) ? data : Object.values(data);
+                    statusEl.innerText = "🟢 Realtime Sync พร้อมทำงาน";
+                    statusEl.className = "text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800";
+                } else {
+                    // ถ้าใน Firebase ยังไม่มีข้อมูล ให้โหลดจาก Google Sheets มาใส่ครั้งแรก
+                    fetchFromSheetsAndSyncFirebase(true);
+                }
                 renderCategories();
                 renderList();
-                return;
-            }
+            }, (error) => {
+                console.error("Firebase Read Error:", error);
+                statusEl.innerText = "❌ เชื่อมต่อ Firebase ไม่สำเร็จ (เช็ค Rules)";
+                statusEl.className = "text-[10px] text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200";
+            });
+        }
 
-            // ถ้าไม่มีข้อมูล หรือ กดปุ่มอัปเดต ให้ดึงจาก Google Sheets
-            if (stockListEl) {
-                stockListEl.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">กำลังโหลดรายการสินค้าจาก Google Sheets...</div>`;
-            }
+        // ดึงรายการจาก Google Sheets มาอัปเดตใส่ Firebase
+        window.fetchFromSheetsAndSyncFirebase = async function(isInitial = false) {
+            if (!isInitial && !confirm("🔄 ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่?")) return;
 
+            statusEl.innerText = "🔄 กำลังดึงจาก Sheets...";
             try {
                 const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
                 const rawData = await response.json();
 
                 if (Array.isArray(rawData) && rawData.length > 0) {
-                    dataSets[currentMode] = rawData.map(item => {
+                    const formattedData = rawData.map(item => {
                         item.count_type = item.count_type ? item.count_type.toString().trim().toLowerCase() : 'both';
                         if (!item.today) item.today = { full: "", frac1: "", frac2: "" };
                         return item;
                     });
-                    saveToLocalStorage();
+                    
+                    // บันทึกลง Firebase
+                    await set(ref(db, `stock_${currentMode}`), formattedData);
+                    alert("✅ อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อย!");
                 }
-
-                renderCategories();
-                renderList();
-            } catch (error) {
-                console.error("Error loading data:", error);
-                if (stockListEl) {
-                    stockListEl.innerHTML = `<div class="text-center py-12 text-rose-500 text-xs bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</div>`;
-                }
+            } catch (err) {
+                console.error(err);
+                alert("❌ เกิดข้อผิดพลาดในการดึงข้อมูลจาก Sheets");
             }
-        }
+        };
 
-        function confirmResetLocalData() {
-            if (confirm("🔄 ต้องการอัปเดตรายการสินค้าจาก Google Sheets ใช่หรือไม่?\n(กรณีมีเพิ่ม/ลดรายการสินค้าใหม่)")) {
-                loadStockData(true);
-            }
-        }
-
-        function switchMode(mode) {
+        window.switchMode = function(mode) {
             currentMode = mode;
             selectedCategory = 'ทั้งหมด';
             document.getElementById('btnDaily').className = mode === 'daily' ? 'px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition' : 'px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition';
             document.getElementById('btnWeekly').className = mode === 'weekly' ? 'px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition' : 'px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition';
-            loadStockData();
-        }
+            listenToFirebase();
+        };
 
-        function setFilter(filter) {
+        window.setFilter = function(filter) {
             currentFilter = filter;
             ['all', 'pending', 'done'].forEach(f => {
                 const btn = document.getElementById(`filter${f.charAt(0).toUpperCase() + f.slice(1)}`);
@@ -231,23 +213,7 @@
                 }
             });
             renderList();
-        }
-
-        function renderCategories() {
-            const container = document.getElementById("categoryContainer");
-            if (!container) return;
-            container.innerHTML = "";
-            const items = dataSets[currentMode] || [];
-            const categories = ["ทั้งหมด", ...new Set(items.map(i => i.category))];
-
-            categories.forEach(cat => {
-                const btn = document.createElement("button");
-                btn.className = `px-3 py-1.5 rounded-lg border text-xs whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`;
-                btn.innerText = cat;
-                btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); };
-                container.appendChild(btn);
-            });
-        }
+        };
 
         function getStatusType(item) {
             if (!item || !item.today) return 'empty';
@@ -268,21 +234,16 @@
             if (type === 'frac2') return (hasFrac1 && hasFrac2) ? 'done' : 'incomplete';
             
             if (type === 'both') {
-                const hasFullFilled = hasFull;
-                const hasFracFilled = hasFrac1 || hasFrac2;
-                if (hasFullFilled && hasFracFilled) return 'done';
+                if (hasFull && (hasFrac1 || hasFrac2)) return 'done';
                 return 'incomplete';
             }
-
-            return (hasFull || hasFrac1 || hasFrac2) ? 'done' : 'incomplete';
+            return 'incomplete';
         }
 
         function updateProgressAndUI() {
-            const items = dataSets[currentMode] || [];
-            if (items.length === 0) return;
-
-            const total = items.length;
-            const completed = items.filter(i => getStatusType(i) === 'done').length;
+            if (stockItems.length === 0) return;
+            const total = stockItems.length;
+            const completed = stockItems.filter(i => getStatusType(i) === 'done').length;
             const pending = total - completed;
             const percent = Math.round((completed / total) * 100);
 
@@ -292,24 +253,33 @@
             document.getElementById("countPending").innerText = pending;
 
             if (percent === 100 && lastCompletedCount < total) {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
             }
             lastCompletedCount = completed;
         }
 
-        function renderList() {
+        function renderCategories() {
+            const container = document.getElementById("categoryContainer");
+            if (!container) return;
+            container.innerHTML = "";
+            const categories = ["ทั้งหมด", ...new Set(stockItems.map(i => i.category))];
+
+            categories.forEach(cat => {
+                const btn = document.createElement("button");
+                btn.className = `px-3 py-1.5 rounded-lg border text-xs whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`;
+                btn.innerText = cat;
+                btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); };
+                container.appendChild(btn);
+            });
+        }
+
+        window.renderList = function() {
             const container = document.getElementById("stockList");
             if (!container) return;
             container.innerHTML = "";
-            const searchInputEl = document.getElementById("searchInput");
-            const searchVal = searchInputEl ? searchInputEl.value.toLowerCase() : "";
+            const searchVal = document.getElementById("searchInput")?.value.toLowerCase() || "";
 
-            const rawItems = dataSets[currentMode] || [];
-            let items = rawItems.filter(item => {
+            let items = stockItems.filter(item => {
                 const matchCategory = selectedCategory === 'ทั้งหมด' || item.category === selectedCategory;
                 const matchSearch = item.id.toLowerCase().includes(searchVal) || item.name.toLowerCase().includes(searchVal);
                 if (!matchCategory || !matchSearch) return false;
@@ -328,7 +298,7 @@
             }
 
             items.forEach((item) => {
-                const originalIdx = dataSets[currentMode].indexOf(item);
+                const originalIdx = stockItems.indexOf(item);
                 let cleanType = item.count_type || 'both';
                 
                 const fFullVal = item.today?.full !== "" && item.today?.full !== null ? item.today?.full : 0;
@@ -359,10 +329,7 @@
                     badgeText = '✅ นับเสร็จแล้ว';
                 }
 
-                let typeLabel = "นับจำนวนเต็ม";
-                if (cleanType === 'frac') typeLabel = "นับเศษ";
-                else if (cleanType === 'frac2') typeLabel = "นับเศษ (2 ช่อง)";
-                else typeLabel = "นับเต็มและเศษ";
+                let typeLabel = cleanType === 'frac' ? "นับเศษ" : cleanType === 'frac2' ? "นับเศษ (2 ช่อง)" : "นับเต็มและเศษ";
 
                 const card = document.createElement("div");
                 card.id = `card_${originalIdx}`;
@@ -387,23 +354,17 @@
                     <div class="grid grid-cols-3 gap-2 mb-2">
                         <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">จำนวนเต็ม</span>
-                            <input type="number" id="f_${originalIdx}" value="${item.today?.full ?? ''}" oninput="handleInput(${originalIdx})" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+                            <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
                         
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษปกติ</span>
-                            <div class="flex items-center">
-                                <input type="number" id="f1_${originalIdx}" value="${item.today?.frac1 ?? ''}" oninput="handleInput(${originalIdx})" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none pr-7" placeholder="0">
-                                <button onclick="openCalculator('f1_${originalIdx}', 'เศษปกติ: ${item.name}')" class="absolute right-1 bottom-1 text-slate-400 hover:text-emerald-600 p-1 text-xs z-10">🧮</button>
-                            </div>
+                            <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
 
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">เศษกระปุก</span>
-                            <div class="flex items-center">
-                                <input type="number" id="f2_${originalIdx}" value="${item.today?.frac2 ?? ''}" oninput="handleInput(${originalIdx})" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none pr-7" placeholder="0">
-                                <button onclick="openCalculator('f2_${originalIdx}', 'เศษกระปุก: ${item.name}')" class="absolute right-1 bottom-1 text-slate-400 hover:text-emerald-600 p-1 text-xs z-10">🧮</button>
-                            </div>
+                            <input type="number" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg p-2 text-center text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
                         </div>
                     </div>
 
@@ -419,7 +380,7 @@
                         
                         <div class="flex items-center gap-3 text-[11px] flex-wrap">
                             <span class="text-slate-400 font-mono">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
-                            <span id="summary_${originalIdx}" class="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-100/70 dark:bg-emerald-900/40 px-2.5 py-1 rounded-md border border-emerald-200 font-mono">
+                            <span class="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-100/70 dark:bg-emerald-900/40 px-2.5 py-1 rounded-md border border-emerald-200 font-mono">
                                 ( เต็ม : ${fFullVal} | เศษรวม : ${totalFrac} )
                             </span>
                         </div>
@@ -427,134 +388,72 @@
                 `;
                 container.appendChild(card);
             });
-        }
+        };
 
-        // เมื่อพิมพ์ปุ๊บ บันทึกลงเครื่องและอัปเดตสีทันที Instant Response
-        function handleInput(idx) {
-            const item = dataSets[currentMode][idx];
-            if (!item.today) item.today = {};
-            
-            const fEl = document.getElementById(`f_${idx}`);
-            const f1El = document.getElementById(`f1_${idx}`);
-            const f2El = document.getElementById(`f2_${idx}`);
+        // ยิงอัปเดตไปที่ Firebase ทันทีที่พิมพ์เสร็จ
+        window.updateFirebaseInput = function(idx, field, val) {
+            const updates = {};
+            updates[`stock_${currentMode}/${idx}/today/${field}`] = val;
+            update(ref(db), updates);
+        };
 
-            item.today.full = fEl ? fEl.value : "";
-            item.today.frac1 = f1El ? f1El.value : "";
-            item.today.frac2 = f2El ? f2El.value : "";
-
-            const status = getStatusType(item);
-
-            // คำนวณยอด
-            const fFullDisplay = item.today.full !== "" ? item.today.full : 0;
-            const f1Num = parseFloat(item.today.frac1) || 0;
-            const f2Num = parseFloat(item.today.frac2) || 0;
-            let finalFrac2 = f2Num - (item.tare || 0);
-            if (finalFrac2 < 0) finalFrac2 = 0;
-            const totalFrac = f1Num + finalFrac2;
-
-            const summaryEl = document.getElementById(`summary_${idx}`);
-            if (summaryEl) {
-                summaryEl.innerText = `( เต็ม : ${fFullDisplay} | เศษรวม : ${totalFrac} )`;
-            }
-
-            // ตรวจสอบสถานะของหมด
-            const isZeroAll = (item.today.full === "0") && (item.today.frac1 === "0") && (item.today.frac2 === "0");
-            document.querySelectorAll(`#card_${idx} .out-of-stock-wrapper`).forEach(w => {
-                if (isZeroAll) w.classList.add('sold-out');
-                else w.classList.remove('sold-out');
-            });
-
-            // อัปเดตสีการ์ดและป้ายทันที
-            const cardEl = document.getElementById(`card_${idx}`);
-            const badgeEl = document.getElementById(`badge_${idx}`);
-            if (cardEl && badgeEl) {
-                if (status === 'done') {
-                    cardEl.className = "p-4 rounded-xl border transition duration-200 bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 shadow-xs pop-animation";
-                    setTimeout(() => cardEl.classList.remove('pop-animation'), 300);
-                    badgeEl.className = "text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-700 font-semibold text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1";
-                    badgeEl.innerText = "✅ นับเสร็จแล้ว";
-                } else if (status === 'incomplete') {
-                    cardEl.className = "p-4 rounded-xl border transition duration-200 bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50 shadow-xs";
-                    badgeEl.className = "text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700 text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1";
-                    badgeEl.innerText = "⏳ ยังไม่ครบ";
-                } else {
-                    cardEl.className = "p-4 rounded-xl border transition duration-200 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-xs";
-                    badgeEl.className = "text-slate-400 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-[10px] px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1";
-                    badgeEl.innerText = "⏳ รอนับ";
-                }
-            }
-
-            // บันทึกลงตัวเครื่องทันทีที่เปลี่ยนค่า
-            saveToLocalStorage();
-            updateProgressAndUI();
-        }
-
-        function setAsYst(idx) {
-            const item = dataSets[currentMode][idx];
-            item.today = {
+        window.setAsYst = function(idx) {
+            const item = stockItems[idx];
+            const updates = {};
+            updates[`stock_${currentMode}/${idx}/today`] = {
                 full: item.yst.full,
                 frac1: item.yst.frac,
                 frac2: 0
             };
-            saveToLocalStorage();
-            renderList();
-        }
+            update(ref(db), updates);
+        };
 
-        function setAsZero(idx) {
-            const item = dataSets[currentMode][idx];
+        window.setAsZero = function(idx) {
+            const item = stockItems[idx];
             const isCurrentlyZero = item.today?.full === "0" && item.today?.frac1 === "0" && item.today?.frac2 === "0";
-            item.today = {
+            const updates = {};
+            updates[`stock_${currentMode}/${idx}/today`] = {
                 full: isCurrentlyZero ? "" : "0",
                 frac1: isCurrentlyZero ? "" : "0",
                 frac2: isCurrentlyZero ? "" : "0"
             };
-            saveToLocalStorage();
-            renderList();
-        }
+            update(ref(db), updates);
+        };
 
-        function startNewDay() {
-            if (confirm("🌅 ต้องการเริ่มรอบวันใหม่ใช่หรือไม่?\n(ระบบจะเซฟค่ายอดนับวันนี้เป็นยอดเมื่อวาน และรีเซ็ตช่องใส่นับใหม่)")) {
-                dataSets[currentMode].forEach(item => {
+        window.startNewDay = function() {
+            if (confirm("🌅 ต้องการเริ่มรอบวันใหม่ใช่หรือไม่?\n(ค่ายอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวานบน Firebase)")) {
+                const newItems = stockItems.map(item => {
                     item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
                     item.today = { full: "", frac1: "", frac2: "" };
+                    return item;
                 });
-                saveToLocalStorage();
-                renderList();
-                alert("✨ รีเซ็ตวันใหม่เรียบร้อย!");
+                set(ref(db, `stock_${currentMode}`), newItems);
             }
-        }
+        };
 
-        async function submitToGoogleSheets() {
-            const completedItems = dataSets[currentMode].filter(item => getStatusType(item) === 'done');
-            
+        window.submitToGoogleSheets = async function() {
+            const completedItems = stockItems.filter(item => getStatusType(item) === 'done');
             if (completedItems.length === 0) {
-                alert("⚠️ ยังไม่มีรายการที่นับเสร็จแล้ว กรุณานับให้อย่างน้อย 1 รายการก่อนส่งข้อมูล");
+                alert("⚠️ ยังไม่มีรายการที่นับเสร็จแล้ว");
                 return;
             }
 
-            if (!confirm(`📤 ต้องการส่งข้อมูลที่นับเสร็จแล้วจำนวน ${completedItems.length} รายการ ไปยัง Google Sheets ใช่หรือไม่?`)) {
-                return;
-            }
+            if (!confirm(`📤 ต้องการส่งข้อมูล ${completedItems.length} รายการ ไปยัง Google Sheets ใช่หรือไม่?`)) return;
 
             try {
                 await fetch(WEB_APP_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        mode: currentMode,
-                        items: completedItems
-                    })
+                    body: JSON.stringify({ mode: currentMode, items: completedItems })
                 });
-
-                alert(`✅ ส่งข้อมูลจำนวน ${completedItems.length} รายการ ไปยัง Google Sheets เรียบร้อยแล้ว!`);
+                alert(`✅ ส่งข้อมูลเรียบร้อยแล้ว!`);
             } catch (error) {
-                console.error("Error submitting data:", error);
-                alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง");
+                alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล");
             }
-        }
+        };
 
-        function toggleDarkMode() {
+        window.toggleDarkMode = function() {
             const html = document.documentElement;
             const icon = document.getElementById('themeIcon');
             if (html.classList.contains('light')) {
@@ -562,43 +461,10 @@
             } else {
                 html.classList.remove('dark'); html.classList.add('light'); icon.innerText = "🌙";
             }
-        }
-
-        function openCalculator(inputId, titleText) {
-            activeInputId = inputId;
-            document.getElementById("calcTitle").innerText = titleText;
-            calcValue = document.getElementById(inputId).value || "0";
-            document.getElementById("calcDisplay").value = calcValue;
-            document.getElementById("calcModal").classList.remove("hidden");
-        }
-
-        function closeCalculator() {
-            document.getElementById("calcModal").classList.add("hidden");
-            activeInputId = null;
-        }
-
-        let calcValue = "0";
-        function calcAppend(val) {
-            calcValue = calcValue === "0" && !isNaN(val) ? val : calcValue + val;
-            document.getElementById("calcDisplay").value = calcValue;
-        }
-        function calcClear() { calcValue = "0"; document.getElementById("calcDisplay").value = calcValue; }
-        function calcBack() { calcValue = calcValue.slice(0, -1) || "0"; document.getElementById("calcDisplay").value = calcValue; }
-        function calcApply() {
-            try { 
-                const result = eval(calcValue).toString();
-                if (activeInputId) {
-                    document.getElementById(activeInputId).value = result;
-                    const idxMatch = activeInputId.match(/\d+/);
-                    if (idxMatch) handleInput(parseInt(idxMatch[0]));
-                }
-                closeCalculator();
-            } catch(e) { document.getElementById("calcDisplay").value = "Error"; calcValue = "0"; }
-        }
-
-        window.onload = function() {
-            loadStockData();
         };
+
+        // เริ่มฟัง Firebase
+        listenToFirebase();
     </script>
 </body>
 </html>
