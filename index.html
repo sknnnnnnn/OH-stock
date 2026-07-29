@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OH stock - Realtime Sync</title>
+    <title>OH STOCK - Realtime Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
@@ -34,7 +34,6 @@
             color: rgba(248, 113, 113, 0.85);
         }
         
-        /* Smooth Slide Animation for Header */
         #mainHeader {
             transition: transform 0.3s ease-in-out;
         }
@@ -42,7 +41,6 @@
             transform: translateY(-100%);
         }
 
-        /* Custom Pop-up Animation */
         @keyframes modalPop {
             0% { transform: scale(0.9); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
@@ -52,15 +50,17 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-12 transition-colors duration-300">
 
-    <!-- Header ล็อกติดด้านบน แบบ Slide Hide-on-Scroll -->
+    <!-- Header ล็อกติดด้านบน -->
     <header id="mainHeader" class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b dark:border-slate-700/80 sticky top-0 z-30 shadow-xs">
         <div class="max-w-3xl mx-auto px-4 py-2.5 space-y-2">
             
-            <!-- บรรทัดที่ 1 -->
+            <!-- โลโก้อิโมจิกล่อง + ข้อความ OH STOCK -->
             <div class="flex justify-between items-center gap-2">
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <span class="text-xl">🧋</span>
-                    <h1 class="font-bold text-base text-slate-900 dark:text-white">OH stock</h1>
+                <div class="flex items-center gap-2 shrink-0">
+                    <div class="bg-slate-800 dark:bg-slate-700 text-white p-1.5 rounded-lg flex items-center justify-center text-base leading-none shadow-xs border border-slate-700">
+                        📦
+                    </div>
+                    <span class="font-bold text-sm tracking-wide text-slate-800 dark:text-slate-100">OH STOCK</span>
                 </div>
                 
                 <div class="flex bg-slate-100 dark:bg-slate-700/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-600">
@@ -78,7 +78,7 @@
                 </div>
             </div>
 
-            <!-- บรรทัดที่ 2: สถานะการนับ -->
+            <!-- สถานะการนับ -->
             <div class="pt-1 border-t border-slate-100 dark:border-slate-700/60">
                 <div class="flex justify-between items-center text-[11px]">
                     <div class="flex items-center gap-2.5 sm:gap-3">
@@ -92,7 +92,7 @@
                 </div>
             </div>
 
-            <!-- บรรทัดที่ 3: ช่องค้นหา & ปุ่มกรองสถานะ -->
+            <!-- ช่องค้นหา & ปุ่มกรองสถานะ -->
             <div class="space-y-1.5">
                 <input type="text" id="searchInput" oninput="renderList()" placeholder="🔍 ค้นหารหัส หรือ ชื่อสินค้า..." 
                     class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
@@ -104,7 +104,7 @@
                 </div>
             </div>
 
-            <!-- บรรทัดที่ 4: หมวดหมู่สินค้า -->
+            <!-- หมวดหมู่สินค้า -->
             <div id="categoryContainer" class="flex gap-1.5 overflow-x-auto pb-1 text-xs"></div>
 
         </div>
@@ -137,12 +137,12 @@
             </div>
 
             <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">
-                OH stock System v2.2
+                OH STOCK v2.3
             </div>
         </div>
     </div>
 
-    <!-- 🌟 Custom Cute Popup กลางจอ 🌟 -->
+    <!-- Custom Popup -->
     <div id="cuteModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-xs w-full text-center space-y-3 border border-slate-100 dark:border-slate-700 animate-pop">
             <div id="modalIcon" class="text-3xl">✨</div>
@@ -157,7 +157,7 @@
         </div>
     </div>
 
-    <!-- 🧮 Calculator Popup Modal 🧮 -->
+    <!-- Calculator Modal -->
     <div id="calcModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-2xl max-w-xs w-full border border-slate-200 dark:border-slate-700 animate-pop space-y-3" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
@@ -167,13 +167,11 @@
                 <button onclick="closeCalculator()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
             </div>
             
-            <!-- หน้าจอเครื่องคิดเลข -->
             <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl text-right border border-slate-200 dark:border-slate-800">
                 <div id="calcExpression" class="text-[10px] text-slate-400 h-4 overflow-hidden font-mono">0</div>
                 <div id="calcDisplay" class="text-xl font-bold font-mono text-slate-800 dark:text-emerald-400 overflow-x-auto">0</div>
             </div>
 
-            <!-- ปุ่มกดเครื่องคิดเลข -->
             <div class="grid grid-cols-4 gap-1.5 text-xs font-semibold">
                 <button onclick="calcInput('C')" class="col-span-2 bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 p-2.5 rounded-lg active:scale-95 transition">C</button>
                 <button onclick="calcInput('DEL')" class="bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 p-2.5 rounded-lg active:scale-95 transition">⌫</button>
@@ -226,6 +224,7 @@
             measurementId: "G-LTGJR4QFW5"
         };
 
+        // 🔗 URL Google Apps Script ล่าสุดของคุณ
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzHaL8Ec89aJuRAnxtkFDZMKLOjBE3zeKCqXOOOOxo-VIAR3OWNDt2RLs4o4G4tAb8/exec";
 
         const app = initializeApp(firebaseConfig);
@@ -237,12 +236,10 @@
         let lastCompletedCount = 0;
         let stockItems = [];
 
-        // Variable for Calculator
         let activeCalcTarget = { idx: null, field: null };
         let calcVal = "0";
         let calcExpr = "";
 
-        // --- 🌙 1. บันทึกและดึงค่า Dark Mode ล่าสุด ---
         function initTheme() {
             const savedTheme = localStorage.getItem('oh_stock_theme') || 'light';
             const html = document.documentElement;
@@ -273,7 +270,6 @@
             }
         };
 
-        // --- 📱 2. Header Slide Hide-on-Scroll Logic ---
         let lastScrollY = window.scrollY;
         const mainHeader = document.getElementById('mainHeader');
 
@@ -287,7 +283,6 @@
             lastScrollY = currentScrollY;
         });
 
-        // --- 🌟 3. Custom Popup Modal ---
         window.showCuteModal = function({ icon = '✨', title = 'แจ้งเตือน', message = '', showCancel = false, onConfirm = null }) {
             const modal = document.getElementById('cuteModal');
             document.getElementById('modalIcon').innerText = icon;
@@ -315,7 +310,6 @@
             document.getElementById('cuteModal').classList.add('hidden');
         };
 
-        // --- 🧮 4. Calculator Modal Logic ---
         window.openCalculator = function(idx, field) {
             activeCalcTarget = { idx, field };
             const currentVal = stockItems[idx]?.today?.[field] || "0";
@@ -375,7 +369,6 @@
             closeCalculator();
         };
 
-        // --- 🔄 5. Realtime & Operations ---
         function listenToFirebase() {
             const stockRef = ref(db, `stock_${currentMode}`);
             onValue(stockRef, (snapshot) => {
@@ -521,7 +514,6 @@
             });
         }
 
-        // --- 🎨 6. Render List ---
         window.renderList = function() {
             const container = document.getElementById("stockList");
             if (!container) return;
@@ -607,16 +599,12 @@
                         </span>
                     </div>
 
-                    <!-- ช่องกรอกแบบ High-Contrast -->
                     <div class="grid ${gridClass} gap-2 mb-2">
-                        
-                        <!-- 1. ช่องจำนวนเต็ม -->
                         <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300 block mb-0.5">จำนวนเต็ม</span>
                             <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="${inputStyle}" placeholder="0">
                         </div>
                         
-                        <!-- 2. ช่องเศษปกติ -->
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <div class="flex justify-between items-center mb-0.5">
                                 <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
@@ -625,7 +613,6 @@
                             <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="${inputStyle}" placeholder="0">
                         </div>
 
-                        <!-- 3. ช่องเศษกระปุก -->
                         ${isNeedTare ? `
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <div class="flex justify-between items-center mb-0.5">
@@ -637,7 +624,6 @@
                         ` : ''}
                     </div>
 
-                    <!-- Compact Footer -->
                     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 border-t border-slate-200 dark:border-slate-700/60 gap-1.5">
                         <div class="flex gap-1.5 shrink-0">
                             <button onclick="setAsYst(${originalIdx})" class="flex-1 sm:flex-none bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-medium transition">
@@ -745,7 +731,6 @@
             drawer.classList.toggle('hidden');
         };
 
-        // เริ่มต้นการทำงาน
         initTheme();
         listenToFirebase();
     </script>
