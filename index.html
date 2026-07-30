@@ -12,26 +12,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Prompt', sans-serif; }
-        .out-of-stock-wrapper { position: relative; }
-        .out-of-stock-wrapper.sold-out::after {
+        
+        /* ปรับแต่งป้ายของหมดให้คลุมทับกลุ่มช่องกรอกทั้งหมด */
+        .input-group-wrapper { position: relative; }
+        .input-group-wrapper.sold-out::after {
             content: "ของหมด";
             position: absolute;
             inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            font-weight: 600;
-            color: rgba(239, 68, 68, 0.75);
-            background-color: rgba(254, 242, 242, 0.85);
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(239, 68, 68, 0.9);
+            background-color: rgba(254, 242, 242, 0.92);
             border-radius: 0.5rem;
             pointer-events: none;
-            letter-spacing: 0.05em;
-            transform: rotate(-3deg);
+            letter-spacing: 0.1em;
+            transform: rotate(-2deg);
+            z-index: 10;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         }
-        .dark .out-of-stock-wrapper.sold-out::after {
-            background-color: rgba(15, 23, 42, 0.9);
-            color: rgba(248, 113, 113, 0.85);
+        .dark .input-group-wrapper.sold-out::after {
+            background-color: rgba(15, 23, 42, 0.95);
+            color: rgba(248, 113, 113, 0.9);
         }
         
         #mainHeader {
@@ -141,6 +145,9 @@
                     <button onclick="submitToGoogleSheets(); toggleMenu();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-sm transition">
                         <span>📤</span> ยืนยันส่งข้อมูลเข้าระบบ (เขียนทับ)
                     </button>
+                    <button onclick="openBackupModal(); toggleMenu();" class="w-full bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition">
+                        <span>📋</span> คัดลอกข้อมูลสำรอง (กรณี Error)
+                    </button>
                     <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition">
                         <span>🌅</span> เริ่มรอบวันใหม่ (รีเซ็ตการนับ)
                     </button>
@@ -148,7 +155,32 @@
             </div>
 
             <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">
-                OH STOCK OJ016 v2.12
+                OH STOCK OJ016 v2.13
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Text Modal -->
+    <div id="backupModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 animate-pop space-y-3" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                    📋 ข้อมูลสำรอง (กรณีส่งระบบไม่ได้)
+                </span>
+                <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+            </div>
+            
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">คุณสามารถกดปุ่มด้านล่างเพื่อคัดลอกข้อความผลการนับทั้งหมด ไปวางสำรองใน Notepad หรือส่งเข้า LINE ได้ทันทีครับ</p>
+
+            <textarea id="backupTextArea" readonly class="w-full h-48 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] font-mono text-slate-700 dark:text-slate-300 outline-none resize-none"></textarea>
+
+            <div class="flex gap-2 pt-1">
+                <button onclick="copyBackupText()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-sm transition active:scale-95 flex items-center justify-center gap-1.5">
+                    <span>📋</span> คัดลอกข้อความทั้งหมด
+                </button>
+                <button onclick="closeBackupModal()" class="px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition">
+                    ปิด
+                </button>
             </div>
         </div>
     </div>
@@ -363,6 +395,47 @@
 
         window.closeCuteModal = function() {
             document.getElementById('cuteModal').classList.add('hidden');
+        };
+
+        window.openBackupModal = function() {
+            let textOutput = `=== รายงานผลการนับสต็อก (${currentMode.toUpperCase()}) ===\n`;
+            textOutput += `วันที่: ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n`;
+            textOutput += `-------------------------------------------\n\n`;
+
+            stockItems.forEach((item, idx) => {
+                const fFull = item.today?.full !== "" && item.today?.full !== null ? item.today.full : 0;
+                const f1 = parseFloat(item.today?.frac1) || 0;
+                let f2 = parseFloat(item.today?.frac2) || 0;
+                let finalF2 = f2 - (item.tare || 0);
+                if (finalF2 < 0) finalF2 = 0;
+                const totalFrac = Math.round((f1 + finalF2) * 100) / 100;
+
+                textOutput += `${idx + 1}. [${item.id}] ${item.name}\n`;
+                textOutput += `   - หมวดหมู่: ${item.category || 'ทั่วไป'}\n`;
+                textOutput += `   - จำนวนเต็ม: ${fFull}\n`;
+                textOutput += `   - เศษรวม: ${totalFrac}\n`;
+                textOutput += `-------------------------------------------\n`;
+            });
+
+            document.getElementById('backupTextArea').value = textOutput;
+            document.getElementById('backupModal').classList.remove('hidden');
+        };
+
+        window.closeBackupModal = function() {
+            document.getElementById('backupModal').classList.add('hidden');
+        };
+
+        window.copyBackupText = function() {
+            const textarea = document.getElementById('backupTextArea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                navigator.clipboard.writeText(textarea.value);
+                showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ!', message: 'คัดลอกข้อมูลทั้งหมดลงคลิปบอร์ดแล้ว สามารถนำไปวางใน LINE หรือ Notepad ได้เลยค่ะ' });
+            } catch (err) {
+                document.execCommand('copy');
+                showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ!', message: 'คัดลอกข้อมูลเรียบร้อยแล้วค่ะ' });
+            }
         };
 
         window.openCalculator = function(idx, field) {
@@ -664,29 +737,31 @@
                         </span>
                     </div>
 
-                    <div class="grid ${gridClass} gap-2 mb-2">
-                        <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300 block mb-0.5">จำนวนเต็ม</span>
-                            <input type="number" id="input_${originalIdx}_full" value="${item.today?.full ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'full', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'full')" class="${inputStyle}" placeholder="0">
-                        </div>
-                        
-                        <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <div class="flex justify-between items-center mb-0.5">
-                                <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
-                                <button onclick="openCalculator(${originalIdx}, 'frac1')" class="text-[10px] hover:scale-110 active:scale-95 transition" title="คำนวณเศษ">🧮</button>
+                    <div class="input-group-wrapper ${isZeroAll ? 'sold-out' : ''}">
+                        <div class="grid ${gridClass} gap-2 mb-2">
+                            <div>
+                                <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300 block mb-0.5">จำนวนเต็ม</span>
+                                <input type="number" id="input_${originalIdx}_full" value="${item.today?.full ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'full', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'full')" class="${inputStyle}" placeholder="0">
                             </div>
-                            <input type="number" id="input_${originalIdx}_frac1" value="${item.today?.frac1 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac1')" class="${inputStyle}" placeholder="0">
-                        </div>
+                            
+                            <div class="relative">
+                                <div class="flex justify-between items-center mb-0.5">
+                                    <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
+                                    <button onclick="openCalculator(${originalIdx}, 'frac1')" class="text-[10px] hover:scale-110 active:scale-95 transition" title="คำนวณเศษ">🧮</button>
+                                </div>
+                                <input type="number" id="input_${originalIdx}_frac1" value="${item.today?.frac1 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac1')" class="${inputStyle}" placeholder="0">
+                            </div>
 
-                        ${isNeedTare ? `
-                        <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
-                            <div class="flex justify-between items-center mb-0.5">
-                                <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">เศษกระปุก</span>
-                                <button onclick="openCalculator(${originalIdx}, 'frac2')" class="text-[10px] hover:scale-110 active:scale-95 transition" title="คำนวณเศษกระปุก">🧮</button>
+                            ${isNeedTare ? `
+                            <div class="relative">
+                                <div class="flex justify-between items-center mb-0.5">
+                                    <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">เศษกระปุก</span>
+                                    <button onclick="openCalculator(${originalIdx}, 'frac2')" class="text-[10px] hover:scale-110 active:scale-95 transition" title="คำนวณเศษกระปุก">🧮</button>
+                                </div>
+                                <input type="number" id="input_${originalIdx}_frac2" value="${item.today?.frac2 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac2')" class="${inputStyle}" placeholder="0">
                             </div>
-                            <input type="number" id="input_${originalIdx}_frac2" value="${item.today?.frac2 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac2')" class="${inputStyle}" placeholder="0">
+                            ` : ''}
                         </div>
-                        ` : ''}
                     </div>
 
                     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 border-t border-slate-200 dark:border-slate-700/60 gap-1.5">
@@ -761,6 +836,15 @@
             const card = document.getElementById(`card_${idx}`);
             const badge = document.getElementById(`badge_${idx}`);
             const summary = document.getElementById(`summary_${idx}`);
+            const inputGroupWrapper = card ? card.querySelector('.input-group-wrapper') : null;
+
+            if (inputGroupWrapper) {
+                if (isZeroAll) {
+                    inputGroupWrapper.classList.add('sold-out');
+                } else {
+                    inputGroupWrapper.classList.remove('sold-out');
+                }
+            }
 
             if (card && badge) {
                 card.className = card.className.replace(/bg-(white|amber-50|emerald-50).*/g, '');
@@ -865,7 +949,11 @@
                         showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
                     } catch (error) {
                         console.error(error);
-                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตนะคะ' });
+                        showCuteModal({ 
+                            icon: '❌', 
+                            title: 'เกิดข้อผิดพลาด (Error)', 
+                            message: 'ไม่สามารถส่งข้อมูลได้ คุณสามารถเปิดเมนูแล้วกด "คัดลอกข้อมูลสำรอง" เพื่อก๊อปปี้ข้อมูลเก็บไว้ได้ทันทีค่ะ' 
+                        });
                     }
                 }
             });
