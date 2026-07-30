@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OH STOCK - Excel Copy System</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <title>OH STOCK - Realtime Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
@@ -33,8 +33,14 @@
             background-color: rgba(15, 23, 42, 0.9);
             color: rgba(248, 113, 113, 0.85);
         }
-        #mainHeader { transition: transform 0.3s ease-in-out; }
-        .header-hidden { transform: translateY(-100%); }
+        
+        #mainHeader {
+            transition: transform 0.3s ease-in-out;
+        }
+        .header-hidden {
+            transform: translateY(-100%);
+        }
+
         @keyframes modalPop {
             0% { transform: scale(0.9); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
@@ -48,6 +54,7 @@
     <header id="mainHeader" class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b dark:border-slate-700/80 sticky top-0 z-30 shadow-xs">
         <div class="max-w-3xl mx-auto px-4 py-2.5 space-y-2">
             
+            <!-- โลโก้อิโมจิกล่อง + ข้อความ OH STOCK -->
             <div class="flex justify-between items-center gap-2">
                 <div class="flex items-center gap-2 shrink-0">
                     <div class="bg-slate-800 dark:bg-slate-700 text-white p-1.5 rounded-lg flex items-center justify-center text-base leading-none shadow-xs border border-slate-700">
@@ -117,11 +124,11 @@
                 </div>
                 
                 <div class="space-y-2">
-                    <button onclick="copyDataForExcel(); toggleMenu();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-sm transition">
-                        <span>📋</span> คัดลอกข้อมูลไปวางใน Excel
-                    </button>
                     <button onclick="fetchFromSheetsAndSyncFirebase(); toggleMenu();" class="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition">
-                        <span>🔄</span> รีเซ็ตดึงรายการสินค้าใหม่
+                        <span>🔄</span> อัปเดตรายการสินค้าจาก Sheets
+                    </button>
+                    <button onclick="submitToGoogleSheets(); toggleMenu();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-sm transition">
+                        <span>📤</span> ยืนยันส่งข้อมูลเข้าระบบ (เขียนทับ)
                     </button>
                     <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition">
                         <span>🌅</span> เริ่มรอบวันใหม่ (รีเซ็ตการนับ)
@@ -130,7 +137,7 @@
             </div>
 
             <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">
-                OH STOCK v2.8 (Excel Clipboard Mode)
+                OH STOCK v2.5 (Clean Sheets Sync)
             </div>
         </div>
     </div>
@@ -198,14 +205,6 @@
 
     <!-- รายการสินค้า -->
     <main class="max-w-3xl mx-auto p-3 space-y-2.5">
-        <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 rounded-xl flex justify-between items-center">
-            <div class="text-xs text-emerald-800 dark:text-emerald-300 font-medium">
-                💡 นำไปวางใน Excel ได้ทันทีโดยกดปุ่มด้านขวา
-            </div>
-            <button onclick="copyDataForExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow-xs transition flex items-center gap-1.5 shrink-0">
-                <span>📋</span> คัดลอกข้อมูลลง Excel
-            </button>
-        </div>
         <div id="stockList" class="space-y-2.5"></div>
     </main>
 
@@ -239,23 +238,6 @@
         let activeCalcTarget = { idx: null, field: null };
         let calcVal = "0";
         let calcExpr = "";
-
-        function saveLocalBackup(items) {
-            try {
-                localStorage.setItem(`oh_stock_backup_${currentMode}`, JSON.stringify(items));
-            } catch (e) {
-                console.error("Save LocalStorage Error:", e);
-            }
-        }
-
-        function getLocalBackup() {
-            try {
-                const data = localStorage.getItem(`oh_stock_backup_${currentMode}`);
-                return data ? JSON.parse(data) : null;
-            } catch (e) {
-                return null;
-            }
-        }
 
         function initTheme() {
             const savedTheme = localStorage.getItem('oh_stock_theme') || 'light';
@@ -391,29 +373,7 @@
             onValue(stockRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    let firebaseItems = Array.isArray(data) ? data : Object.values(data);
-                    
-                    const localBackup = getLocalBackup();
-                    if (localBackup && Array.isArray(localBackup)) {
-                        firebaseItems = firebaseItems.map(fbItem => {
-                            const foundLocal = localBackup.find(l => l.id === fbItem.id);
-                            if (foundLocal && foundLocal.today) {
-                                const hasLocalInput = (foundLocal.today.full !== "" && foundLocal.today.full !== null && foundLocal.today.full !== undefined) ||
-                                                      (foundLocal.today.frac1 !== "" && foundLocal.today.frac1 !== null && foundLocal.today.frac1 !== undefined) ||
-                                                      (foundLocal.today.frac2 !== "" && foundLocal.today.frac2 !== null && foundLocal.today.frac2 !== undefined);
-                                const hasFbInput = (fbItem.today?.full !== "" && fbItem.today?.full !== null && fbItem.today?.full !== undefined) ||
-                                                   (fbItem.today?.frac1 !== "" && fbItem.today?.frac1 !== null && fbItem.today?.frac1 !== undefined) ||
-                                                   (fbItem.today?.frac2 !== "" && fbItem.today?.frac2 !== null && fbItem.today?.frac2 !== undefined);
-                                if (hasLocalInput && !hasFbInput) {
-                                    fbItem.today = foundLocal.today;
-                                }
-                            }
-                            return fbItem;
-                        });
-                    }
-
-                    stockItems = firebaseItems;
-                    saveLocalBackup(stockItems);
+                    stockItems = Array.isArray(data) ? data : Object.values(data);
                 } else {
                     fetchFromSheetsAndSyncFirebase(true);
                 }
@@ -421,12 +381,6 @@
                 renderList();
             }, (error) => {
                 console.error("Firebase Read Error:", error);
-                const localBackup = getLocalBackup();
-                if (localBackup) {
-                    stockItems = localBackup;
-                    renderCategories();
-                    renderList();
-                }
             });
         }
 
@@ -438,56 +392,46 @@
                     const rawData = await response.json();
 
                     if (Array.isArray(rawData) && rawData.length > 0) {
-                        const localBackup = getLocalBackup();
-                        const formattedData = rawData.map(item => {
-                            let todayData = {
-                                full: item.today?.full ?? "",
-                                frac1: item.today?.frac1 ?? "",
-                                frac2: item.today?.frac2 ?? ""
-                            };
+                        const oldItemsMap = new Map();
+                        if (stockItems && stockItems.length > 0) {
+                            stockItems.forEach(item => {
+                                if (item.id) oldItemsMap.set(item.id.toString().trim(), item);
+                            });
+                        }
 
-                            if (localBackup && Array.isArray(localBackup)) {
-                                const foundLocal = localBackup.find(l => l.id === (item.id || ""));
-                                if (foundLocal && foundLocal.today) {
-                                    const hasLocalInput = (foundLocal.today.full !== "" && foundLocal.today.full !== null && foundLocal.today.full !== undefined) ||
-                                                          (foundLocal.today.frac1 !== "" && foundLocal.today.frac1 !== null && foundLocal.today.frac1 !== undefined) ||
-                                                          (foundLocal.today.frac2 !== "" && foundLocal.today.frac2 !== null && foundLocal.today.frac2 !== undefined);
-                                    if (hasLocalInput) {
-                                        todayData = foundLocal.today;
-                                    }
-                                }
-                            }
+                        const formattedData = rawData.map(item => {
+                            const itemId = item.id ? item.id.toString().trim() : "";
+                            const existingItem = oldItemsMap.get(itemId);
 
                             return {
-                                id: item.id || "",
+                                id: itemId,
                                 name: item.name || "",
                                 category: item.category || "ทั่วไป",
                                 unit: item.unit || "หน่วย",
                                 count_type: item.count_type ? item.count_type.toString().trim().toLowerCase() : 'both',
                                 tare: parseFloat(item.tare) || 0,
-                                yst: {
-                                    full: item.yst?.full ?? 0,
-                                    frac: item.yst?.frac ?? 0
+                                yst: existingItem ? existingItem.yst : { 
+                                    full: parseFloat(item.yst?.full) || 0, 
+                                    frac: parseFloat(item.yst?.frac) || 0 
                                 },
-                                today: todayData
+                                today: existingItem ? existingItem.today : { full: "", frac1: "", frac2: "" }
                             };
                         });
                         
                         await set(ref(db, `stock_${currentMode}`), formattedData);
-                        saveLocalBackup(formattedData);
                         showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อยแล้ว' });
                     }
                 } catch (err) {
                     console.error(err);
-                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลได้' });
+                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheets ได้ กรุณาลองใหม่อีกครั้ง' });
                 }
             };
 
             if (!isInitial) {
                 showCuteModal({
                     icon: '🔄',
-                    title: 'ยืนยันการรีเซ็ต',
-                    message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่?',
+                    title: 'ยืนยันการอัปเดต',
+                    message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่? (ยอดที่พนักงานนับค้างไว้จะไม่หายไป)',
                     showCancel: true,
                     onConfirm: doFetch
                 });
@@ -641,6 +585,7 @@
                 card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm ${cardBg}`;
                 
                 const gridClass = isNeedTare ? "grid-cols-3" : "grid-cols-2";
+
                 const inputStyle = "w-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-bold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner transition";
 
                 card.innerHTML = `
@@ -707,10 +652,6 @@
         };
 
         window.updateFirebaseInput = function(idx, field, val) {
-            if (stockItems[idx] && stockItems[idx].today) {
-                stockItems[idx].today[field] = val;
-                saveLocalBackup(stockItems);
-            }
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today/${field}`] = val;
             update(ref(db), updates);
@@ -718,28 +659,24 @@
 
         window.setAsYst = function(idx) {
             const item = stockItems[idx];
-            item.today = {
+            const updates = {};
+            updates[`stock_${currentMode}/${idx}/today`] = {
                 full: item.yst.full,
                 frac1: item.yst.frac,
                 frac2: 0
             };
-            saveLocalBackup(stockItems);
-            const updates = {};
-            updates[`stock_${currentMode}/${idx}/today`] = item.today;
             update(ref(db), updates);
         };
 
         window.setAsZero = function(idx) {
             const item = stockItems[idx];
             const isCurrentlyZero = item.today?.full === "0" && item.today?.frac1 === "0" && item.today?.frac2 === "0";
-            item.today = {
+            const updates = {};
+            updates[`stock_${currentMode}/${idx}/today`] = {
                 full: isCurrentlyZero ? "" : "0",
                 frac1: isCurrentlyZero ? "" : "0",
                 frac2: isCurrentlyZero ? "" : "0"
             };
-            saveLocalBackup(stockItems);
-            const updates = {};
-            updates[`stock_${currentMode}/${idx}/today`] = item.today;
             update(ref(db), updates);
         };
 
@@ -750,57 +687,38 @@
                 message: 'ต้องการเริ่มรอบวันใหม่ใช่หรือไม่? (ยอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวาน)',
                 showCancel: true,
                 onConfirm: () => {
-                    stockItems = stockItems.map(item => {
+                    const newItems = stockItems.map(item => {
                         item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
                         item.today = { full: "", frac1: "", frac2: "" };
                         return item;
                     });
-                    saveLocalBackup(stockItems);
-                    set(ref(db, `stock_${currentMode}`), stockItems);
+                    set(ref(db, `stock_${currentMode}`), newItems);
                     showCuteModal({ icon: '✨', title: 'สำเร็จ!', message: 'เริ่มรอบวันใหม่เรียบร้อยแล้ว' });
                 }
             });
         };
 
-        // ฟังก์ชันคัดลอกข้อมูลลง Excel โดยจัดคอลัมน์เป๊ะๆ
-        window.copyDataForExcel = function() {
-            if (stockItems.length === 0) {
-                showCuteModal({ icon: '⚠️', title: 'ไม่มีข้อมูล', message: 'ไม่พบรายการสินค้าในระบบค่ะ' });
-                return;
-            }
-
-            // สร้างหัวตาราง (Tab-separated สำหรับวางลง Excel)
-            let tsvContent = "รหัสสินค้า\tชื่อสินค้า\tหมวดหมู่\tหน่วยนับ\tยอดเมื่อวาน (เต็ม)\tยอดเมื่อวาน (เศษ)\tนับวันนี้ (เต็ม)\tนับวันนี้ (เศษสุทธิ)\n";
-
-            stockItems.forEach(item => {
-                const id = item.id || "";
-                const name = item.name || "";
-                const category = item.category || "";
-                const unit = item.unit || "";
-                const ystFull = item.yst?.full ?? 0;
-                const ystFrac = item.yst?.frac ?? 0;
-                
-                const fullVal = (item.today?.full !== "" && item.today?.full !== null && item.today?.full !== undefined) ? item.today.full : 0;
-                
-                const f1 = parseFloat(item.today?.frac1) || 0;
-                const f2 = parseFloat(item.today?.frac2) || 0;
-                let finalFrac2 = f2 - (item.tare || 0);
-                if (finalFrac2 < 0) finalFrac2 = 0;
-                const totalFrac = Math.round((f1 + finalFrac2) * 100) / 100;
-
-                tsvContent += `${id}\t${name}\t${category}\t${unit}\t${ystFull}\t${ystFrac}\t${fullVal}\t${totalFrac}\n`;
-            });
-
-            // ใช้ Clipboard API คัดลอกลงเครื่อง
-            navigator.clipboard.writeText(tsvContent).then(() => {
-                showCuteModal({ 
-                    icon: '📋', 
-                    title: 'คัดลอกสำเร็จ!', 
-                    message: 'คัดลอกข้อมูลทั้งหมดลงคลิปบอร์ดแล้ว! คุณสามารถเปิดไฟล์ Excel แล้วคลิกช่องซ้ายบนสุด (เซลล์ A1) แล้วกด Ctrl+V เพื่อวางได้ทันทีค่ะ' 
-                });
-            }).catch(err => {
-                console.error(err);
-                showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถคัดลอกข้อมูลได้ กรุณาลองใหม่อีกครั้ง' });
+        window.submitToGoogleSheets = async function() {
+            showCuteModal({
+                icon: '📤',
+                title: 'ยืนยันการส่งข้อมูล',
+                message: 'ต้องการส่งผลการนับทั้งหมดเข้า Google Sheets (เขียนทับชีตผลลัพธ์) ใช่หรือไม่?',
+                showCancel: true,
+                onConfirm: async () => {
+                    showCuteModal({ icon: '⏳', title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets...' });
+                    try {
+                        const response = await fetch(WEB_APP_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ mode: currentMode, items: stockItems })
+                        });
+                        
+                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
+                    } catch (error) {
+                        console.error(error);
+                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต' });
+                    }
+                }
             });
         };
 
