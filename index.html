@@ -42,10 +42,22 @@
         }
 
         @keyframes modalPop {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+            0% { transform: scale(0.85) translateY(10px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
         }
-        .animate-pop { animation: modalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-pop { animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        @keyframes floatCute {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(3deg); }
+        }
+        .animate-float { animation: floatCute 2.5s ease-in-out infinite; }
+
+        @keyframes spinSlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin-slow { animation: spinSlow 3s linear infinite; }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-12 transition-colors duration-300">
@@ -54,7 +66,6 @@
     <header id="mainHeader" class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b dark:border-slate-700/80 sticky top-0 z-30 shadow-xs">
         <div class="max-w-3xl mx-auto px-4 py-2.5 space-y-2">
             
-            <!-- โลโก้อิโมจิกล่อง + ข้อความ OH STOCK -->
             <div class="flex justify-between items-center gap-2">
                 <div class="flex items-center gap-2 shrink-0">
                     <div class="bg-slate-800 dark:bg-slate-700 text-white p-1.5 rounded-lg flex items-center justify-center text-base leading-none shadow-xs border border-slate-700">
@@ -137,22 +148,36 @@
             </div>
 
             <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">
-                OH STOCK v2.5 (Clean Sheets Sync)
+                OH STOCK v2.12
             </div>
         </div>
     </div>
 
-    <!-- Custom Popup -->
-    <div id="cuteModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-xs w-full text-center space-y-3 border border-slate-100 dark:border-slate-700 animate-pop">
-            <div id="modalIcon" class="text-3xl">✨</div>
-            <div class="space-y-1">
-                <h3 id="modalTitle" class="font-bold text-sm text-slate-800 dark:text-slate-100">แจ้งเตือน</h3>
-                <p id="modalMessage" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">ข้อความรายละเอียด...</p>
+    <!-- Custom Popup (ดีไซน์น่ารัก ละมุนขึ้น ปรับตัวหนังสืออ่านง่าย และซ่อนปุ่มตอนโหลด) -->
+    <div id="cuteModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-2xl max-w-xs w-full text-center space-y-4 border border-slate-100 dark:border-slate-700 animate-pop relative overflow-hidden">
+            
+            <!-- แถบแสงตกแต่งด้านบน -->
+            <div class="absolute -top-12 -left-12 w-28 h-28 bg-emerald-400/20 rounded-full blur-xl pointer-events-none"></div>
+            <div class="absolute -top-12 -right-12 w-28 h-28 bg-indigo-400/20 rounded-full blur-xl pointer-events-none"></div>
+
+            <!-- ไอคอนแสดงสถานะ -->
+            <div class="pt-2">
+                <div id="modalIconContainer" class="w-16 h-16 mx-auto bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-emerald-100 dark:border-emerald-800/50">
+                    <span id="modalIcon" class="inline-block">✨</span>
+                </div>
             </div>
+
+            <!-- ข้อความ (ขยายขนาดตัวหนังสือให้อ่านง่ายขึ้น) -->
+            <div class="space-y-2 px-1">
+                <h3 id="modalTitle" class="font-bold text-base text-slate-800 dark:text-slate-100 tracking-wide">แจ้งเตือน</h3>
+                <p id="modalMessage" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">ข้อความรายละเอียด...</p>
+            </div>
+
+            <!-- ปุ่มกด (จะถูกซ่อนอัตโนมัติหากเป็นสถานะกำลังโหลด) -->
             <div id="modalActions" class="flex gap-2 pt-2">
-                <button id="modalBtnOk" onclick="closeCuteModal()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium py-2 rounded-xl transition shadow-xs">ตกลง</button>
-                <button id="modalBtnCancel" onclick="closeCuteModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium py-2 rounded-xl transition hidden">ยกเลิก</button>
+                <button id="modalBtnOk" onclick="closeCuteModal()" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-md shadow-emerald-500/20 active:scale-95">ตกลง</button>
+                <button id="modalBtnCancel" onclick="closeCuteModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition hidden active:scale-95">ยกเลิก</button>
             </div>
         </div>
     </div>
@@ -234,6 +259,7 @@
         let selectedCategory = 'ทั้งหมด';
         let lastCompletedCount = 0;
         let stockItems = [];
+        let isSyncingFromFirebase = false;
 
         let activeCalcTarget = { idx: null, field: null };
         let calcVal = "0";
@@ -282,25 +308,62 @@
             lastScrollY = currentScrollY;
         });
 
+        // ฟังก์ชันแสดงป๊อปอัปแบบปกติ (มีปุ่มตกลง/ยกเลิก)
         window.showCuteModal = function({ icon = '✨', title = 'แจ้งเตือน', message = '', showCancel = false, onConfirm = null }) {
             const modal = document.getElementById('cuteModal');
-            document.getElementById('modalIcon').innerText = icon;
+            const iconEl = document.getElementById('modalIcon');
+            const iconContainer = document.getElementById('modalIconContainer');
+            
+            iconEl.innerText = icon;
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalMessage').innerText = message;
             
+            iconContainer.className = "w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl shadow-inner border";
+            if (icon === '🎉' || icon === '✨') {
+                iconContainer.className += " bg-emerald-50 dark:bg-emerald-950/60 border-emerald-100 dark:border-emerald-800/50 animate-float text-emerald-500";
+            } else if (icon === '❌') {
+                iconContainer.className += " bg-rose-50 dark:bg-rose-950/60 border-rose-100 dark:border-rose-800/50 animate-float text-rose-500";
+            } else {
+                iconContainer.className += " bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-600";
+            }
+
+            const actionsContainer = document.getElementById('modalActions');
             const btnCancel = document.getElementById('modalBtnCancel');
             const btnOk = document.getElementById('modalBtnOk');
 
+            actionsContainer.classList.remove('hidden'); // แสดงปุ่มปกติ
+
             if (showCancel) {
                 btnCancel.classList.remove('hidden');
+                btnOk.innerText = "ยืนยัน";
             } else {
                 btnCancel.classList.add('hidden');
+                btnOk.innerText = "ตกลง";
             }
 
             btnOk.onclick = () => {
                 closeCuteModal();
                 if (onConfirm) onConfirm();
             };
+
+            modal.classList.remove('hidden');
+        };
+
+        // ฟังก์ชันเฉพาะสำหรับสถานะกำลังโหลด (ซ่อนปุ่มตกลง และปรับแต่งไอคอนหมุน)
+        window.showLoadingModal = function({ title = 'กำลังโหลดข้อมูล', message = 'กำลังโหลดข้อมูล รอสักครู่นะคะ...' }) {
+            const modal = document.getElementById('cuteModal');
+            const iconEl = document.getElementById('modalIcon');
+            const iconContainer = document.getElementById('modalIconContainer');
+            
+            iconEl.innerText = '⏳';
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            
+            iconContainer.className = "w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl shadow-inner border bg-amber-50 dark:bg-amber-950/60 border-amber-100 dark:border-amber-800/50 animate-spin-slow text-amber-500";
+
+            // ซ่อนปุ่มทั้งหมดเมื่อกำลังโหลด
+            const actionsContainer = document.getElementById('modalActions');
+            actionsContainer.classList.add('hidden');
 
             modal.classList.remove('hidden');
         };
@@ -377,8 +440,10 @@
                 } else {
                     fetchFromSheetsAndSyncFirebase(true);
                 }
+                isSyncingFromFirebase = true;
                 renderCategories();
                 renderList();
+                setTimeout(() => { isSyncingFromFirebase = false; }, 300);
             }, (error) => {
                 console.error("Firebase Read Error:", error);
             });
@@ -386,7 +451,7 @@
 
         window.fetchFromSheetsAndSyncFirebase = function(isInitial = false) {
             const doFetch = async () => {
-                showCuteModal({ icon: '⏳', title: 'กำลังโหลดข้อมูล', message: 'กำลังดึงรายการสินค้าล่าสุดจาก Google Sheets...' });
+                showLoadingModal({ title: 'กำลังโหลดข้อมูล', message: 'กำลังดึงรายการสินค้าล่าสุดจาก Google Sheets รอสักครู่นะคะ...' });
                 try {
                     const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
                     const rawData = await response.json();
@@ -419,11 +484,11 @@
                         });
                         
                         await set(ref(db, `stock_${currentMode}`), formattedData);
-                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อยแล้ว' });
+                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อยแล้วค่ะ' });
                     }
                 } catch (err) {
                     console.error(err);
-                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheets ได้ กรุณาลองใหม่อีกครั้ง' });
+                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheets ได้ กรุณาลองใหม่อีกครั้งนะคะ' });
                 }
             };
 
@@ -431,7 +496,7 @@
                 showCuteModal({
                     icon: '🔄',
                     title: 'ยืนยันการอัปเดต',
-                    message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่หรือไม่? (ยอดที่พนักงานนับค้างไว้จะไม่หายไป)',
+                    message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่ไหมคะ? (ยอดที่พนักงานนับค้างไว้จะไม่หายไปค่ะ)',
                     showCancel: true,
                     onConfirm: doFetch
                 });
@@ -520,6 +585,8 @@
         }
 
         window.renderList = function() {
+            if (isSyncingFromFirebase && document.activeElement && document.activeElement.tagName === 'INPUT') return;
+            
             const container = document.getElementById("stockList");
             if (!container) return;
             container.innerHTML = "";
@@ -586,7 +653,7 @@
                 
                 const gridClass = isNeedTare ? "grid-cols-3" : "grid-cols-2";
 
-                const inputStyle = "w-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-bold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner transition";
+                const inputStyle = "stock-input w-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-bold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner transition";
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2 mb-2">
@@ -607,7 +674,7 @@
                     <div class="grid ${gridClass} gap-2 mb-2">
                         <div class="out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
                             <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300 block mb-0.5">จำนวนเต็ม</span>
-                            <input type="number" value="${item.today?.full ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'full', this.value)" class="${inputStyle}" placeholder="0">
+                            <input type="number" id="input_${originalIdx}_full" value="${item.today?.full ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'full', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'full')" class="${inputStyle}" placeholder="0">
                         </div>
                         
                         <div class="relative out-of-stock-wrapper ${isZeroAll ? 'sold-out' : ''}">
@@ -615,7 +682,7 @@
                                 <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
                                 <button onclick="openCalculator(${originalIdx}, 'frac1')" class="text-[10px] hover:scale-110 active:scale-95 transition" title="คำนวณเศษ">🧮</button>
                             </div>
-                            <input type="number" value="${item.today?.frac1 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" class="${inputStyle}" placeholder="0">
+                            <input type="number" id="input_${originalIdx}_frac1" value="${item.today?.frac1 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac1')" class="${inputStyle}" placeholder="0">
                         </div>
 
                         ${isNeedTare ? `
@@ -624,7 +691,7 @@
                                 <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">เศษกระปุก</span>
                                 <button onclick="openCalculator(${originalIdx}, 'frac2')" class="text-[10px] hover:scale-110 active:scale-95 transition" title="คำนวณเศษกระปุก">🧮</button>
                             </div>
-                            <input type="number" value="${item.today?.frac2 ?? ''}" onchange="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" class="${inputStyle}" placeholder="0">
+                            <input type="number" id="input_${originalIdx}_frac2" value="${item.today?.frac2 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac2')" class="${inputStyle}" placeholder="0">
                         </div>
                         ` : ''}
                     </div>
@@ -641,7 +708,7 @@
                         
                         <div class="flex items-center justify-between sm:justify-end gap-2 text-[10px] flex-wrap">
                             <span class="text-slate-500 dark:text-slate-400 font-mono text-[9px]">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
-                            <span class="text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 font-mono text-[10px]">
+                            <span id="summary_${originalIdx}" class="text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 font-mono text-[10px]">
                                 ( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )
                             </span>
                         </div>
@@ -651,40 +718,129 @@
             });
         };
 
+        window.handleInputKeydown = function(event, idx, field) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                updateFirebaseInput(idx, field, event.target.value);
+
+                const inputs = Array.from(document.querySelectorAll('.stock-input'));
+                const currentIndex = inputs.indexOf(event.target);
+
+                if (currentIndex !== -1 && currentIndex + 1 < inputs.length) {
+                    inputs[currentIndex + 1].focus();
+                    inputs[currentIndex + 1].select();
+                } else {
+                    event.target.blur();
+                }
+            }
+        };
+
         window.updateFirebaseInput = function(idx, field, val) {
+            if (stockItems[idx] && stockItems[idx].today) {
+                stockItems[idx].today[field] = val;
+            }
+            
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today/${field}`] = val;
             update(ref(db), updates);
+
+            updateCardUI(idx);
         };
+
+        function updateCardUI(idx) {
+            const item = stockItems[idx];
+            if (!item) return;
+
+            let cleanType = item.count_type || 'both';
+            const fFullVal = item.today?.full !== "" && item.today?.full !== null ? item.today?.full : 0;
+            const f1Val = parseFloat(item.today?.frac1) || 0;
+            let f2Val = parseFloat(item.today?.frac2) || 0;
+            let finalFrac2 = f2Val - (item.tare || 0);
+            if (finalFrac2 < 0) finalFrac2 = 0;
+            const totalFrac = Math.round((f1Val + finalFrac2) * 100) / 100;
+            const status = getStatusType(item);
+            const isNeedTare = cleanType === 'frac2' || (item.tare && item.tare > 0);
+
+            const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && 
+                              (item.today?.frac1 === 0 || item.today?.frac1 === "0") && 
+                              (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
+
+            const card = document.getElementById(`card_${idx}`);
+            const badge = document.getElementById(`badge_${idx}`);
+            const summary = document.getElementById(`summary_${idx}`);
+
+            if (card && badge) {
+                card.className = card.className.replace(/bg-(white|amber-50|emerald-50).*/g, '');
+                if (status === 'incomplete') {
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-amber-50/70 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-500`;
+                    badge.className = `text-white bg-amber-500 border border-amber-600 font-bold shadow-xs text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
+                    badge.innerText = '⏳ ไม่ครบ';
+                } else if (status === 'done') {
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500 dark:border-emerald-500`;
+                    badge.className = `text-white bg-emerald-600 border border-emerald-700 font-bold shadow-xs text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
+                    badge.innerText = '✅ นับเสร็จแล้ว';
+                } else {
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700`;
+                    badge.className = `text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
+                    badge.innerText = '⏳ รอนับ';
+                }
+            }
+
+            if (summary) {
+                summary.innerText = `( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )`;
+            }
+
+            updateProgressAndUI();
+        }
 
         window.setAsYst = function(idx) {
             const item = stockItems[idx];
-            const updates = {};
-            updates[`stock_${currentMode}/${idx}/today`] = {
+            item.today = {
                 full: item.yst.full,
                 frac1: item.yst.frac,
                 frac2: 0
             };
+            const updates = {};
+            updates[`stock_${currentMode}/${idx}/today`] = item.today;
             update(ref(db), updates);
+
+            const fInput = document.getElementById(`input_${idx}_full`);
+            const f1Input = document.getElementById(`input_${idx}_frac1`);
+            const f2Input = document.getElementById(`input_${idx}_frac2`);
+            if (fInput) fInput.value = item.yst.full;
+            if (f1Input) f1Input.value = item.yst.frac;
+            if (f2Input) f2Input.value = 0;
+
+            updateCardUI(idx);
         };
 
         window.setAsZero = function(idx) {
             const item = stockItems[idx];
             const isCurrentlyZero = item.today?.full === "0" && item.today?.frac1 === "0" && item.today?.frac2 === "0";
-            const updates = {};
-            updates[`stock_${currentMode}/${idx}/today`] = {
+            item.today = {
                 full: isCurrentlyZero ? "" : "0",
                 frac1: isCurrentlyZero ? "" : "0",
                 frac2: isCurrentlyZero ? "" : "0"
             };
+            const updates = {};
+            updates[`stock_${currentMode}/${idx}/today`] = item.today;
             update(ref(db), updates);
+
+            const fInput = document.getElementById(`input_${idx}_full`);
+            const f1Input = document.getElementById(`input_${idx}_frac1`);
+            const f2Input = document.getElementById(`input_${idx}_frac2`);
+            if (fInput) fInput.value = item.today.full;
+            if (f1Input) f1Input.value = item.today.frac1;
+            if (f2Input) f2Input.value = item.today.frac2;
+
+            updateCardUI(idx);
         };
 
         window.startNewDay = function() {
             showCuteModal({
                 icon: '🌅',
                 title: 'เริ่มรอบวันใหม่',
-                message: 'ต้องการเริ่มรอบวันใหม่ใช่หรือไม่? (ยอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวาน)',
+                message: 'ต้องการเริ่มรอบวันใหม่ใช่ไหมคะ? (ยอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวานค่ะ)',
                 showCancel: true,
                 onConfirm: () => {
                     const newItems = stockItems.map(item => {
@@ -693,7 +849,7 @@
                         return item;
                     });
                     set(ref(db, `stock_${currentMode}`), newItems);
-                    showCuteModal({ icon: '✨', title: 'สำเร็จ!', message: 'เริ่มรอบวันใหม่เรียบร้อยแล้ว' });
+                    showCuteModal({ icon: '✨', title: 'สำเร็จ!', message: 'เริ่มรอบวันใหม่เรียบร้อยแล้วค่ะ' });
                 }
             });
         };
@@ -702,10 +858,10 @@
             showCuteModal({
                 icon: '📤',
                 title: 'ยืนยันการส่งข้อมูล',
-                message: 'ต้องการส่งผลการนับทั้งหมดเข้า Google Sheets (เขียนทับชีตผลลัพธ์) ใช่หรือไม่?',
+                message: 'ต้องการส่งผลการนับทั้งหมดเข้า Google Sheets (เขียนทับชีตผลลัพธ์) ใช่ไหมคะ?',
                 showCancel: true,
                 onConfirm: async () => {
-                    showCuteModal({ icon: '⏳', title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets...' });
+                    showLoadingModal({ title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets รอสักครู่นะคะ...' });
                     try {
                         const response = await fetch(WEB_APP_URL, {
                             method: 'POST',
@@ -716,7 +872,7 @@
                         showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
                     } catch (error) {
                         console.error(error);
-                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต' });
+                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตนะคะ' });
                     }
                 }
             });
