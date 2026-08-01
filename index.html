@@ -15,40 +15,40 @@
         
         .input-group-wrapper { position: relative; }
         .input-group-wrapper.sold-out::after {
-            content: "ของหมด";
+            content: "สินค้าหมด";
             position: absolute;
             inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            font-weight: 700;
-            color: rgba(239, 68, 68, 0.9);
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(225, 29, 72, 0.9);
             background-color: rgba(254, 242, 242, 0.92);
             border-radius: 0.5rem;
             pointer-events: none;
-            letter-spacing: 0.1em;
-            transform: rotate(-2deg);
+            letter-spacing: 0.05em;
+            transform: rotate(-1.5deg);
             z-index: 10;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         }
         .dark .input-group-wrapper.sold-out::after {
             background-color: rgba(15, 23, 42, 0.95);
-            color: rgba(248, 113, 113, 0.9);
+            color: rgba(251, 113, 133, 0.9);
         }
         
         #mainHeader { transition: transform 0.3s ease-in-out; }
         .header-hidden { transform: translateY(-100%); }
 
         @keyframes modalPop {
-            0% { transform: scale(0.85) translateY(10px); opacity: 0; }
+            0% { transform: scale(0.9) translateY(8px); opacity: 0; }
             100% { transform: scale(1) translateY(0); opacity: 1; }
         }
-        .animate-pop { animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-pop { animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
         @keyframes floatCute {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-8px) rotate(3deg); }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
         }
         .animate-float { animation: floatCute 2.5s ease-in-out infinite; }
 
@@ -66,136 +66,134 @@
             
             <div class="flex justify-between items-center gap-2">
                 <div class="flex items-center gap-2 shrink-0">
-                    <div class="bg-slate-800 dark:bg-slate-700 text-white p-1.5 rounded-lg flex items-center justify-center text-base leading-none shadow-xs border border-slate-700">📦</div>
-                    <span class="font-bold text-sm tracking-wide text-slate-800 dark:text-slate-100">OH STOCK OJ016</span>
+                    <div class="bg-emerald-600 text-white p-1.5 rounded-lg flex items-center justify-center text-sm shadow-xs">📦</div>
+                    <span class="font-semibold text-sm tracking-wide text-slate-800 dark:text-slate-100">OH STOCK OJ016</span>
                 </div>
                 
                 <div class="flex bg-slate-100 dark:bg-slate-700/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-600">
-                    <button id="btnDaily" onclick="switchMode('daily')" class="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition">Daily</button>
-                    <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">Weekly</button>
+                    <button id="btnDaily" onclick="switchMode('daily')" class="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition">รายวัน</button>
+                    <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">รายสัปดาห์</button>
                 </div>
 
                 <div class="flex items-center gap-1.5 shrink-0">
                     <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition border border-slate-200/50 dark:border-slate-600"><span id="themeIcon">🌙</span></button>
-                    <button onclick="toggleMenu()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 px-2.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition border border-slate-200/50 dark:border-slate-600">☰</button>
+                    <button onclick="toggleMenu()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 transition border border-slate-200/50 dark:border-slate-600">เมนู</button>
                 </div>
             </div>
 
             <div class="pt-1 border-t border-slate-100 dark:border-slate-700/60">
                 <div class="flex justify-between items-center text-[11px]">
                     <div class="flex items-center gap-2.5 sm:gap-3">
-                        <span class="font-medium text-slate-500 dark:text-slate-400">📊 การนับ:</span>
-                        <span class="font-bold text-emerald-600 dark:text-emerald-400">นับเสร็จ: <span id="countDone">0</span></span>
+                        <span class="text-slate-400">สถานะการนับ:</span>
+                        <span class="font-medium text-emerald-600 dark:text-emerald-400">เสร็จแล้ว <span id="countDone">0</span></span>
+                        <span class="text-slate-300 dark:text-slate-600">/</span>
+                        <span class="font-medium text-slate-700 dark:text-slate-200">ทั้งหมด <span id="countTotal">0</span></span>
                         <span class="text-slate-300 dark:text-slate-600">|</span>
-                        <span class="font-bold text-slate-700 dark:text-slate-200">ทั้งหมด: <span id="countTotal">0</span></span>
-                        <span class="text-slate-300 dark:text-slate-600">|</span>
-                        <span class="font-bold text-amber-600 dark:text-amber-400">รอนับ: <span id="countPending">0</span></span>
+                        <span class="font-medium text-amber-600 dark:text-amber-400">ค้าง <span id="countPending">0</span></span>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-1.5">
-                <input type="text" id="searchInput" oninput="renderList()" placeholder="🔍 ค้นหารหัส หรือ ชื่อสินค้า..." 
-                    class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
+                <input type="text" id="searchInput" oninput="renderList()" placeholder="🔍 ค้นหารหัสสินค้า หรือ ชื่อสินค้า..." 
+                    class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none transition">
                 
                 <div class="flex gap-1">
-                    <button id="filterAll" onclick="setFilter('all')" class="flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium">ทั้งหมด</button>
-                    <button id="filterPending" onclick="setFilter('pending')" class="flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">⏳ รอนับ / ไม่ครบ</button>
-                    <button id="filterDone" onclick="setFilter('done')" class="flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">✅ นับเสร็จแล้ว</button>
+                    <button id="filterAll" onclick="setFilter('all')" class="flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium transition">ทั้งหมด</button>
+                    <button id="filterPending" onclick="setFilter('pending')" class="flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 transition">ยังไม่ครบ</button>
+                    <button id="filterDone" onclick="setFilter('done')" class="flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 transition">นับแล้ว</button>
                 </div>
             </div>
 
-            <div id="categoryContainer" class="flex gap-1.5 overflow-x-auto pb-1 text-xs"></div>
+            <div id="categoryContainer" class="flex gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none"></div>
         </div>
-        <div class="bg-slate-200 dark:bg-slate-700 h-1 w-full">
-            <div id="progressBar" class="bg-emerald-500 h-1 transition-all duration-500" style="width: 0%"></div>
+        <div class="bg-slate-200 dark:bg-slate-700 h-0.5 w-full">
+            <div id="progressBar" class="bg-emerald-500 h-0.5 transition-all duration-500" style="width: 0%"></div>
         </div>
     </header>
 
-    <div id="menuDrawer" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs hidden transition-opacity duration-300" onclick="toggleMenu()">
+    <div id="menuDrawer" class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs hidden transition-opacity duration-300" onclick="toggleMenu()">
         <div class="absolute right-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-800 p-5 shadow-2xl flex flex-col justify-between" onclick="event.stopPropagation()">
             <div class="space-y-4">
                 <div class="flex justify-between items-center border-b dark:border-slate-700 pb-3">
-                    <h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">⚙️ เมนูจัดการระบบ</h2>
-                    <button onclick="toggleMenu()" class="text-slate-400 hover:text-slate-600 text-base">✕</button>
+                    <h2 class="font-semibold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">เมนูจัดการระบบ</h2>
+                    <button onclick="toggleMenu()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
                 </div>
-                <div class="space-y-2">
-                    <button onclick="fetchFromSheetsAndSyncFirebase(); toggleMenu();" class="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition"><span>🔄</span> อัปเดตรายการสินค้าจาก Sheets</button>
-                    <button onclick="submitToGoogleSheets(); toggleMenu();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-sm transition"><span>📤</span> ยืนยันส่งข้อมูลเข้าระบบ (เขียนทับ)</button>
-                    <button onclick="openBackupModal(); toggleMenu();" class="w-full bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-800 dark:text-indigo-300 border border-indigo-200 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition"><span>📋</span> คัดลอกข้อมูลสำรอง (กรณี Error)</button>
-                    <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition"><span>🌅</span> เริ่มรอบวันใหม่ (รีเซ็ตการนับ)</button>
+                <div class="space-y-2 text-xs">
+                    <button onclick="fetchFromSheetsAndSyncFirebase(); toggleMenu();" class="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 p-2.5 rounded-lg font-medium flex items-center gap-2.5 transition"><span>🔄</span> ดึงข้อมูลใหม่จาก Sheets</button>
+                    <button onclick="submitToGoogleSheets(); toggleMenu();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-lg font-medium flex items-center gap-2.5 shadow-xs transition"><span>📤</span> ส่งข้อมูลเข้าระบบ Google Sheets</button>
+                    <button onclick="openBackupModal(); toggleMenu();" class="w-full bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 p-2.5 rounded-lg font-medium flex items-center gap-2.5 transition"><span>📋</span> สำรองข้อมูล (แบบคอลัมน์)</button>
+                    <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 p-2.5 rounded-lg font-medium flex items-center gap-2.5 transition"><span>🌅</span> เริ่มรอบวันใหม่</button>
                 </div>
             </div>
-            <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">OH STOCK OJ016 v2.14</div>
+            <div class="text-[10px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">OH STOCK OJ016 v2.16</div>
         </div>
     </div>
 
-    <div id="backupModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 animate-pop space-y-3" onclick="event.stopPropagation()">
+    <div id="backupModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 animate-pop space-y-3" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">📋 ข้อมูลสำรอง (กรณีส่งระบบไม่ได้)</span>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">สำรองข้อมูลสำหรับ Google Sheets</span>
                 <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
             </div>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">คุณสามารถกดปุ่มด้านล่างเพื่อคัดลอกข้อความผลการนับทั้งหมด ไปวางสำรองใน Notepad หรือส่งเข้า LINE ได้ทันทีครับ</p>
-            <textarea id="backupTextArea" readonly class="w-full h-48 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] font-mono text-slate-700 dark:text-slate-300 outline-none resize-none"></textarea>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">กดคัดลอกด้านล่าง แล้วนำไปวาง (Ctrl+V) ลงใน Google Sheets ข้อมูลจะถูกจัดลงคอลัมน์ให้อัตโนมัติทันที</p>
+            <textarea id="backupTextArea" readonly class="w-full h-44 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-[10px] font-mono text-slate-700 dark:text-slate-300 outline-none resize-none"></textarea>
             <div class="flex gap-2 pt-1">
-                <button onclick="copyBackupText()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-sm transition active:scale-95 flex items-center justify-center gap-1.5"><span>📋</span> คัดลอกข้อความทั้งหมด</button>
-                <button onclick="closeBackupModal()" class="px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition">ปิด</button>
+                <button onclick="copyBackupText()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium py-2 rounded-lg shadow-xs transition active:scale-95 flex items-center justify-center gap-1.5"><span>📋</span> คัดลอกข้อความ</button>
+                <button onclick="closeBackupModal()" class="px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-medium py-2 rounded-lg transition">ปิด</button>
             </div>
         </div>
     </div>
 
-    <div id="cuteModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-2xl max-w-xs w-full text-center space-y-4 border border-slate-100 dark:border-slate-700 animate-pop relative overflow-hidden">
-            <div class="absolute -top-12 -left-12 w-28 h-28 bg-emerald-400/20 rounded-full blur-xl pointer-events-none"></div>
-            <div class="absolute -top-12 -right-12 w-28 h-28 bg-indigo-400/20 rounded-full blur-xl pointer-events-none"></div>
+    <div id="cuteModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl max-w-xs w-full text-center space-y-4 border border-slate-100 dark:border-slate-700 animate-pop relative overflow-hidden">
             <div class="pt-2">
-                <div id="modalIconContainer" class="w-16 h-16 mx-auto bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-emerald-100">
+                <div id="modalIconContainer" class="w-14 h-14 mx-auto rounded-xl flex items-center justify-center text-2xl shadow-inner border">
                     <span id="modalIcon" class="inline-block">✨</span>
                 </div>
             </div>
-            <div class="space-y-2 px-1">
-                <h3 id="modalTitle" class="font-bold text-base text-slate-800 dark:text-slate-100 tracking-wide">แจ้งเตือน</h3>
-                <p id="modalMessage" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">ข้อความรายละเอียด...</p>
+            <div class="space-y-1.5 px-1">
+                <h3 id="modalTitle" class="font-semibold text-sm text-slate-800 dark:text-slate-100">แจ้งเตือน</h3>
+                <p id="modalMessage" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">รายละเอียด...</p>
             </div>
             <div id="modalActions" class="flex gap-2 pt-2">
-                <button id="modalBtnOk" onclick="closeCuteModal()" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-md active:scale-95">ตกลง</button>
-                <button id="modalBtnCancel" onclick="closeCuteModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition hidden active:scale-95">ยกเลิก</button>
+                <button id="modalBtnOk" onclick="closeCuteModal()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs active:scale-95">ตกลง</button>
+                <button id="modalBtnCancel" onclick="closeCuteModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-medium py-2.5 rounded-lg transition hidden active:scale-95">ยกเลิก</button>
             </div>
         </div>
     </div>
 
-    <div id="calcModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-2xl max-w-xs w-full border border-slate-200 dark:border-slate-700 animate-pop space-y-3" onclick="event.stopPropagation()">
+    <div id="calcModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-2xl max-w-xs w-full border border-slate-200 dark:border-slate-700 animate-pop space-y-3" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">🧮 เครื่องคิดเลขช่วยนับ</span>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">เครื่องคิดเลขช่วยนับ</span>
                 <button onclick="closeCalculator()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
             </div>
-            <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl text-right border border-slate-200 dark:border-slate-800">
+            <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg text-right border border-slate-200 dark:border-slate-800">
                 <div id="calcExpression" class="text-[10px] text-slate-400 h-4 overflow-hidden font-mono">0</div>
-                <div id="calcDisplay" class="text-xl font-bold font-mono text-slate-800 dark:text-emerald-400 overflow-x-auto">0</div>
+                <div id="calcDisplay" class="text-lg font-bold font-mono text-slate-800 dark:text-emerald-400 overflow-x-auto">0</div>
             </div>
-            <div class="grid grid-cols-4 gap-1.5 text-xs font-semibold">
-                <button onclick="calcInput('C')" class="col-span-2 bg-rose-100 dark:bg-rose-950/60 text-rose-600 p-2.5 rounded-lg active:scale-95 transition">C</button>
-                <button onclick="calcInput('DEL')" class="bg-amber-100 dark:bg-amber-950/60 text-amber-700 p-2.5 rounded-lg active:scale-95 transition">⌫</button>
-                <button onclick="calcInput('/')" class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 p-2.5 rounded-lg active:scale-95 transition">÷</button>
-                <button onclick="calcInput('7')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">7</button>
-                <button onclick="calcInput('8')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">8</button>
-                <button onclick="calcInput('9')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">9</button>
-                <button onclick="calcInput('*')" class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 p-2.5 rounded-lg active:scale-95 transition">×</button>
-                <button onclick="calcInput('4')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">4</button>
-                <button onclick="calcInput('5')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">5</button>
-                <button onclick="calcInput('6')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">6</button>
-                <button onclick="calcInput('-')" class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 p-2.5 rounded-lg active:scale-95 transition">-</button>
-                <button onclick="calcInput('1')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">1</button>
-                <button onclick="calcInput('2')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">2</button>
-                <button onclick="calcInput('3')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">3</button>
-                <button onclick="calcInput('+')" class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 p-2.5 rounded-lg active:scale-95 transition">+</button>
-                <button onclick="calcInput('0')" class="col-span-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">0</button>
-                <button onclick="calcInput('.')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">.</button>
-                <button onclick="calcInput('=')" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2.5 rounded-lg active:scale-95 transition">=</button>
+            <div class="grid grid-cols-4 gap-1.5 text-xs font-medium">
+                <button onclick="calcInput('C')" class="col-span-2 bg-rose-50 dark:bg-rose-950/50 text-rose-600 p-2 rounded-lg active:scale-95 transition">C</button>
+                <button onclick="calcInput('DEL')" class="bg-amber-50 dark:bg-amber-950/50 text-amber-700 p-2 rounded-lg active:scale-95 transition">⌫</button>
+                <button onclick="calcInput('/')" class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 p-2 rounded-lg active:scale-95 transition">÷</button>
+                <button onclick="calcInput('7')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">7</button>
+                <button onclick="calcInput('8')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">8</button>
+                <button onclick="calcInput('9')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">9</button>
+                <button onclick="calcInput('*')" class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 p-2 rounded-lg active:scale-95 transition">×</button>
+                <button onclick="calcInput('4')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">4</button>
+                <button onclick="calcInput('5')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">5</button>
+                <button onclick="calcInput('6')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">6</button>
+                <button onclick="calcInput('-')" class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 p-2 rounded-lg active:scale-95 transition">-</button>
+                <button onclick="calcInput('1')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">1</button>
+                <button onclick="calcInput('2')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">2</button>
+                <button onclick="calcInput('3')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">3</button>
+                <button onclick="calcInput('+')" class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 p-2 rounded-lg active:scale-95 transition">+</button>
+                <button onclick="calcInput('0')" class="col-span-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">0</button>
+                <button onclick="calcInput('.')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2 rounded-lg active:scale-95 transition">.</button>
+                <button onclick="calcInput('=')" class="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-lg active:scale-95 transition">=</button>
             </div>
-            <button onclick="applyCalculatorResult()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-sm transition">✓ ใช้ยอดนี้</button>
+            <button onclick="applyCalculatorResult()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium py-2.5 rounded-lg shadow-xs transition">ใช้ผลลัพธ์นี้</button>
         </div>
     </div>
 
@@ -281,11 +279,11 @@
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalMessage').innerText = message;
             
-            iconContainer.className = "w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl shadow-inner border";
+            iconContainer.className = "w-14 h-14 mx-auto rounded-xl flex items-center justify-center text-2xl shadow-inner border";
             if (icon === '🎉' || icon === '✨') {
-                iconContainer.className += " bg-emerald-50 dark:bg-emerald-950/60 border-emerald-100 animate-float text-emerald-500";
+                iconContainer.className += " bg-emerald-50 dark:bg-emerald-950/60 border-emerald-100 text-emerald-600 animate-float";
             } else if (icon === '❌') {
-                iconContainer.className += " bg-rose-50 dark:bg-rose-950/60 border-rose-100 animate-float text-rose-500";
+                iconContainer.className += " bg-rose-50 dark:bg-rose-950/60 border-rose-100 text-rose-600 animate-float";
             } else {
                 iconContainer.className += " bg-slate-50 dark:bg-slate-900 border-slate-100 text-slate-600";
             }
@@ -307,14 +305,14 @@
             modal.classList.remove('hidden');
         };
 
-        window.showLoadingModal = function({ title = 'กำลังโหลดข้อมูล', message = 'กำลังโหลดข้อมูล รอสักครู่นะคะ...' }) {
+        window.showLoadingModal = function({ title = 'กำลังโหลด', message = 'กรุณารอสักครู่...' }) {
             const modal = document.getElementById('cuteModal');
             const iconEl = document.getElementById('modalIcon');
             const iconContainer = document.getElementById('modalIconContainer');
             iconEl.innerText = '⏳';
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalMessage').innerText = message;
-            iconContainer.className = "w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl shadow-inner border bg-amber-50 dark:bg-amber-950/60 border-amber-100 animate-spin-slow text-amber-500";
+            iconContainer.className = "w-14 h-14 mx-auto rounded-xl flex items-center justify-center text-2xl shadow-inner border bg-amber-50 dark:bg-amber-950/60 border-amber-100 text-amber-600 animate-spin-slow";
             document.getElementById('modalActions').classList.add('hidden');
             modal.classList.remove('hidden');
         };
@@ -322,25 +320,19 @@
         window.closeCuteModal = function() { document.getElementById('cuteModal').classList.add('hidden'); };
 
         window.openBackupModal = function() {
-            let textOutput = `=== รายงานผลการนับสต็อก (${currentMode.toUpperCase()}) ===\n`;
-            textOutput += `วันที่: ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n`;
-            textOutput += `-------------------------------------------\n\n`;
-
-            stockItems.forEach((item, idx) => {
+            let textOutput = "";
+            stockItems.forEach((item) => {
                 const fFull = item.today?.full !== "" && item.today?.full !== null ? item.today.full : 0;
                 const f1 = parseFloat(item.today?.frac1) || 0;
                 let f2 = parseFloat(item.today?.frac2) || 0;
                 let finalF2 = f2 - (item.tare || 0);
                 if (finalF2 < 0) finalF2 = 0;
 
-                textOutput += `${idx + 1}. [${item.id}] ${item.name}\n`;
-                textOutput += `   - หมวดหมู่: ${item.category || 'ทั่วไป'}\n`;
-                textOutput += `   - จำนวนเต็ม: ${fFull}\n`;
-                textOutput += `   - เศษปกติ: ${f1}\n`;
-                textOutput += `   - เศษตัดกระปุก: ${finalF2} (ดิบ: ${f2}, หักกระปุก: ${item.tare || 0})\n`;
-                textOutput += `-------------------------------------------\n`;
+                const timestamp = new Date().toLocaleString('th-TH');
+                textOutput += `${timestamp}\t${item.id || ""}\t${item.name || ""}\t${item.category || "ทั่วไป"}\t${fFull}\t${f1}\t${finalF2}\n`;
             });
-            document.getElementById('backupTextArea').value = textOutput;
+
+            document.getElementById('backupTextArea').value = textOutput.trim();
             document.getElementById('backupModal').classList.remove('hidden');
         };
 
@@ -351,10 +343,10 @@
             textarea.select();
             try {
                 navigator.clipboard.writeText(textarea.value);
-                showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ!', message: 'คัดลอกข้อมูลลงคลิปบอร์ดแล้วค่ะ' });
+                showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ', message: 'คัดลอกข้อมูลเรียบร้อยแล้ว นำไปวางใน Google Sheets ได้เลยครับ' });
             } catch (err) {
                 document.execCommand('copy');
-                showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ!', message: 'คัดลอกข้อมูลเรียบร้อยแล้วค่ะ' });
+                showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ', message: 'คัดลอกข้อมูลเรียบร้อยแล้วครับ' });
             }
         };
 
@@ -417,7 +409,7 @@
 
         window.fetchFromSheetsAndSyncFirebase = function(isInitial = false) {
             const doFetch = async () => {
-                showLoadingModal({ title: 'กำลังโหลดข้อมูล', message: 'กำลังดึงรายการสินค้าจาก Google Sheets...' });
+                showLoadingModal({ title: 'กำลังซิงค์ข้อมูล', message: 'กำลังดึงรายการสินค้าจาก Google Sheets...' });
                 try {
                     const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
                     const rawData = await response.json();
@@ -441,14 +433,14 @@
                             };
                         });
                         await set(ref(db, `stock_${currentMode}`), formattedData);
-                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'อัปเดตรายการสินค้าเรียบร้อยแล้วค่ะ' });
+                        showCuteModal({ icon: '🎉', title: 'สำเร็จ', message: 'อัปเดตรายการสินค้าเรียบร้อยแล้วครับ' });
                     }
                 } catch (err) {
-                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheets ได้' });
+                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้' });
                 }
             };
             if (!isInitial) {
-                showCuteModal({ icon: '🔄', title: 'ยืนยันการอัปเดต', message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่ไหมคะ?', showCancel: true, onConfirm: doFetch });
+                showCuteModal({ icon: '🔄', title: 'ยืนยันการดึงข้อมูล', message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่ไหมครับ?', showCancel: true, onConfirm: doFetch });
             } else { doFetch(); }
         };
 
@@ -465,9 +457,9 @@
             ['all', 'pending', 'done'].forEach(f => {
                 const btn = document.getElementById(`filter${f.charAt(0).toUpperCase() + f.slice(1)}`);
                 if (f === filter) {
-                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 font-medium";
+                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium transition";
                 } else {
-                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200";
+                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 transition";
                 }
             });
             renderList();
@@ -506,7 +498,7 @@
             container.innerHTML = "";
             ["ทั้งหมด", ...new Set(stockItems.map(i => i.category || "ทั่วไป"))].forEach(cat => {
                 const btn = document.createElement("button");
-                btn.className = `px-2.5 py-1 rounded-lg border text-[11px] whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200'}`;
+                btn.className = `px-2.5 py-1 rounded-lg border text-[11px] whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`;
                 btn.innerText = cat;
                 btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); };
                 container.appendChild(btn);
@@ -550,71 +542,71 @@
                 const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && (item.today?.frac1 === 0 || item.today?.frac1 === "0") && (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
 
                 let cardBg = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
-                let badgeClass = 'text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-300';
+                let badgeClass = 'text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600';
                 let badgeText = '⏳ รอนับ';
 
                 if (status === 'incomplete') {
-                    cardBg = 'bg-amber-50/70 dark:bg-amber-950/40 border-2 border-amber-400';
-                    badgeClass = 'text-white bg-amber-50 border border-amber-600 font-bold shadow-xs';
-                    badgeText = '⏳ ไม่ครบ';
+                    cardBg = 'bg-amber-50/70 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700';
+                    badgeClass = 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-800 font-medium';
+                    badgeText = '⏳ ยังไม่ครบ';
                 } else if (status === 'done') {
-                    cardBg = 'bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500';
-                    badgeClass = 'text-white bg-emerald-600 border border-emerald-700 font-bold shadow-xs';
-                    badgeText = '✅ นับเสร็จแล้ว';
+                    cardBg = 'bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-700';
+                    badgeClass = 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 font-medium';
+                    badgeText = '✅ นับแล้ว';
                 }
 
-                let typeLabel = isNeedTare ? "นับเศษ (ตัดกระปุก)" : (cleanType === 'frac' ? "นับเศษ" : "นับเต็มและเศษ");
+                let typeLabel = isNeedTare ? "นับเศษ (หักกระปุก)" : (cleanType === 'frac' ? "นับเศษ" : "เต็มและเศษ");
                 const card = document.createElement("div");
                 card.id = `card_${originalIdx}`;
-                card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm ${cardBg}`;
+                card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-xs ${cardBg}`;
                 const gridClass = isNeedTare ? "grid-cols-3" : "grid-cols-2";
-                const inputStyle = "stock-input w-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-bold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner transition";
+                const inputStyle = "stock-input w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-semibold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-1 focus:ring-emerald-500 outline-none shadow-inner transition";
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2 mb-2">
                         <div>
-                            <div class="flex items-center gap-1 flex-wrap">
-                                <span class="font-mono text-[10px] text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded font-medium">${item.id}</span>
-                                <span class="text-[9px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded border">📌 ${typeLabel}</span>
-                                ${item.tare > 0 ? `<span class="text-[9px] text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border">✂️ -${item.tare}</span>` : ''}
-                                <span class="text-[9px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${item.category || 'ทั่วไป'}</span>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/60 px-1.5 py-0.5 rounded font-medium">${item.id}</span>
+                                <span class="text-[9px] text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-900">${typeLabel}</span>
+                                ${item.tare > 0 ? `<span class="text-[9px] text-rose-600 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-100 dark:border-rose-900">กระปุก -${item.tare}</span>` : ''}
+                                <span class="text-[9px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/60 px-1.5 py-0.5 rounded">${item.category || 'ทั่วไป'}</span>
                             </div>
-                            <h2 class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mt-1 leading-snug">${item.name}</h2>
+                            <h2 class="text-xs sm:text-sm font-medium text-slate-900 dark:text-white mt-1 leading-snug">${item.name}</h2>
                         </div>
-                        <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1">${badgeText}</span>
+                        <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1">${badgeText}</span>
                     </div>
                     <div class="input-group-wrapper ${isZeroAll ? 'sold-out' : ''}">
                         <div class="grid ${gridClass} gap-2 mb-2">
                             <div>
-                                <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300 block mb-0.5">จำนวนเต็ม</span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">จำนวนเต็ม</span>
                                 <input type="number" id="input_${originalIdx}_full" value="${item.today?.full ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'full', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'full')" class="${inputStyle}" placeholder="0">
                             </div>
                             <div class="relative">
-                                <div class="flex justify-between items-center mb-0.5">
-                                    <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
-                                    <button onclick="openCalculator(${originalIdx}, 'frac1')" class="text-[10px] hover:scale-110 active:scale-95 transition">🧮</button>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
+                                    <button onclick="openCalculator(${originalIdx}, 'frac1')" class="text-[11px] hover:scale-110 active:scale-95 transition text-slate-400 hover:text-slate-600">🧮</button>
                                 </div>
                                 <input type="number" id="input_${originalIdx}_frac1" value="${item.today?.frac1 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac1')" class="${inputStyle}" placeholder="0">
                             </div>
                             ${isNeedTare ? `
                             <div class="relative">
-                                <div class="flex justify-between items-center mb-0.5">
-                                    <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">เศษกระปุก</span>
-                                    <button onclick="openCalculator(${originalIdx}, 'frac2')" class="text-[10px] hover:scale-110 active:scale-95 transition">🧮</button>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400">เศษกระปุก</span>
+                                    <button onclick="openCalculator(${originalIdx}, 'frac2')" class="text-[11px] hover:scale-110 active:scale-95 transition text-slate-400 hover:text-slate-600">🧮</button>
                                 </div>
                                 <input type="number" id="input_${originalIdx}_frac2" value="${item.today?.frac2 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac2')" class="${inputStyle}" placeholder="0">
                             </div>
                             ` : ''}
                         </div>
                     </div>
-                    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 border-t border-slate-200 dark:border-slate-700/60 gap-1.5">
+                    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 border-t border-slate-100 dark:border-slate-700/60 gap-2">
                         <div class="flex gap-1.5 shrink-0">
-                            <button onclick="setAsYst(${originalIdx})" class="flex-1 sm:flex-none bg-slate-100 hover:bg-slate-200 text-slate-700 border px-2 py-0.5 rounded text-[10px] font-medium transition">↺ ยอดเมื่อวาน</button>
-                            <button onclick="setAsZero(${originalIdx})" class="flex-1 sm:flex-none bg-rose-50 hover:bg-rose-100 text-rose-700 border px-2 py-0.5 rounded text-[10px] font-medium transition">✕ ของหมด (0)</button>
+                            <button onclick="setAsYst(${originalIdx})" class="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-md text-[10px] font-medium transition">ใช้ยอดเมื่อวาน</button>
+                            <button onclick="setAsZero(${originalIdx})" class="flex-1 sm:flex-none bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2.5 py-1 rounded-md text-[10px] font-medium transition">หมด (0)</button>
                         </div>
                         <div class="flex items-center justify-between sm:justify-end gap-2 text-[10px] flex-wrap">
-                            <span class="text-slate-500 font-mono text-[9px]">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
-                            <span id="summary_${originalIdx}" class="text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-100 px-2 py-0.5 rounded border font-mono text-[10px]">( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )</span>
+                            <span class="text-slate-400 font-mono text-[9px]">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
+                            <span id="summary_${originalIdx}" class="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-900 font-mono text-[10px] font-medium">( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )</span>
                         </div>
                     </div>
                 `;
@@ -668,16 +660,16 @@
 
             if (card && badge) {
                 if (status === 'incomplete') {
-                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-amber-50/70 dark:bg-amber-950/40 border-2 border-amber-400`;
-                    badge.className = `text-white bg-amber-500 border border-amber-600 font-bold shadow-xs text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
-                    badge.innerText = '⏳ ไม่ครบ';
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-xs bg-amber-50/70 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700`;
+                    badge.className = `text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-800 font-medium text-[10px] px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1`;
+                    badge.innerText = '⏳ ยังไม่ครบ';
                 } else if (status === 'done') {
-                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500`;
-                    badge.className = `text-white bg-emerald-600 border border-emerald-700 font-bold shadow-xs text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
-                    badge.innerText = '✅ นับเสร็จแล้ว';
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-xs bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-700`;
+                    badge.className = `text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 font-medium text-[10px] px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1`;
+                    badge.innerText = '✅ นับแล้ว';
                 } else {
-                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-white dark:bg-slate-800 border-slate-200`;
-                    badge.className = `text-slate-500 bg-slate-100 border border-slate-300 text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700`;
+                    badge.className = `text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1`;
                     badge.innerText = '⏳ รอนับ';
                 }
             }
@@ -719,7 +711,7 @@
 
         window.startNewDay = function() {
             showCuteModal({
-                icon: '🌅', title: 'เริ่มรอบวันใหม่', message: 'ต้องการเริ่มรอบวันใหม่ใช่ไหมคะ?', showCancel: true,
+                icon: '🌅', title: 'เริ่มรอบวันใหม่', message: 'ต้องการล้างข้อมูลเพื่อเริ่มรอบวันใหม่ใช่ไหมครับ?', showCancel: true,
                 onConfirm: () => {
                     const newItems = stockItems.map(item => {
                         item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
@@ -727,14 +719,14 @@
                         return item;
                     });
                     set(ref(db, `stock_${currentMode}`), newItems);
-                    showCuteModal({ icon: '✨', title: 'สำเร็จ!', message: 'เริ่มรอบวันใหม่เรียบร้อยแล้วค่ะ' });
+                    showCuteModal({ icon: '✨', title: 'สำเร็จ', message: 'เริ่มรอบวันใหม่เรียบร้อยแล้วครับ' });
                 }
             });
         };
 
         window.submitToGoogleSheets = async function() {
             showCuteModal({
-                icon: '📤', title: 'ยืนยันการส่งข้อมูล', message: 'ต้องการส่งผลการนับทั้งหมดเข้า Google Sheets แบบแยกช่องเศษใช่ไหมคะ?', showCancel: true,
+                icon: '📤', title: 'ยืนยันการส่งข้อมูล', message: 'ต้องการส่งผลการนับทั้งหมดเข้า Google Sheets ใช่ไหมครับ?', showCancel: true,
                 onConfirm: async () => {
                     showLoadingModal({ title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets...' });
                     try {
@@ -747,9 +739,9 @@
                                 ...item, 
                                 today: { 
                                     ...item.today, 
-                                    frac_normal: f1,       // ส่งช่องเศษปกติแยกไป
-                                    frac_tare_net: finalF2, // ส่งช่องเศษหลังหักกระปุกแยกไป
-                                    frac: f1 + finalF2     // เผื่อช่องรวมเดิมด้วย
+                                    frac_normal: f1,       
+                                    frac_tare_net: finalF2, 
+                                    frac: f1 + finalF2     
                                 } 
                             };
                         });
@@ -759,9 +751,9 @@
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ mode: currentMode, items: processedItems })
                         });
-                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
+                        showCuteModal({ icon: '🎉', title: 'สำเร็จ', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วครับ' });
                     } catch (error) {
-                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาใช้ปุ่มคัดลอกข้อมูลสำรอง' });
+                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาใช้ฟังก์ชันสำรองข้อมูล' });
                     }
                 }
             });
