@@ -1,4 +1,208 @@
-<!-- Firebase SDK Modular -->
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OH STOCK OJ016</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+        
+        .input-group-wrapper { position: relative; }
+        .input-group-wrapper.sold-out::after {
+            content: "ของหมด";
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(239, 68, 68, 0.9);
+            background-color: rgba(254, 242, 242, 0.92);
+            border-radius: 0.5rem;
+            pointer-events: none;
+            letter-spacing: 0.1em;
+            transform: rotate(-2deg);
+            z-index: 10;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+        .dark .input-group-wrapper.sold-out::after {
+            background-color: rgba(15, 23, 42, 0.95);
+            color: rgba(248, 113, 113, 0.9);
+        }
+        
+        #mainHeader { transition: transform 0.3s ease-in-out; }
+        .header-hidden { transform: translateY(-100%); }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.85) translateY(10px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-pop { animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        @keyframes floatCute {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(3deg); }
+        }
+        .animate-float { animation: floatCute 2.5s ease-in-out infinite; }
+
+        @keyframes spinSlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin-slow { animation: spinSlow 3s linear infinite; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-12 transition-colors duration-300">
+
+    <header id="mainHeader" class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b dark:border-slate-700/80 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-3xl mx-auto px-4 py-2.5 space-y-2">
+            
+            <div class="flex justify-between items-center gap-2">
+                <div class="flex items-center gap-2 shrink-0">
+                    <div class="bg-slate-800 dark:bg-slate-700 text-white p-1.5 rounded-lg flex items-center justify-center text-base leading-none shadow-xs border border-slate-700">📦</div>
+                    <span class="font-bold text-sm tracking-wide text-slate-800 dark:text-slate-100">OH STOCK OJ016</span>
+                </div>
+                
+                <div class="flex bg-slate-100 dark:bg-slate-700/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-600">
+                    <button id="btnDaily" onclick="switchMode('daily')" class="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs transition">Daily</button>
+                    <button id="btnWeekly" onclick="switchMode('weekly')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 transition">Weekly</button>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 rounded-lg text-xs transition border border-slate-200/50 dark:border-slate-600"><span id="themeIcon">🌙</span></button>
+                    <button onclick="toggleMenu()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1.5 px-2.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition border border-slate-200/50 dark:border-slate-600">☰</button>
+                </div>
+            </div>
+
+            <div class="pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                <div class="flex justify-between items-center text-[11px]">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <span class="font-medium text-slate-500 dark:text-slate-400">📊 การนับ:</span>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400">นับเสร็จ: <span id="countDone">0</span></span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200">ทั้งหมด: <span id="countTotal">0</span></span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <span class="font-bold text-amber-600 dark:text-amber-400">รอนับ: <span id="countPending">0</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <input type="text" id="searchInput" oninput="renderList()" placeholder="🔍 ค้นหารหัส หรือ ชื่อสินค้า..." 
+                    class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
+                
+                <div class="flex gap-1">
+                    <button id="filterAll" onclick="setFilter('all')" class="flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium">ทั้งหมด</button>
+                    <button id="filterPending" onclick="setFilter('pending')" class="flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">⏳ รอนับ / ไม่ครบ</button>
+                    <button id="filterDone" onclick="setFilter('done')" class="flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">✅ นับเสร็จแล้ว</button>
+                </div>
+            </div>
+
+            <div id="categoryContainer" class="flex gap-1.5 overflow-x-auto pb-1 text-xs"></div>
+        </div>
+        <div class="bg-slate-200 dark:bg-slate-700 h-1 w-full">
+            <div id="progressBar" class="bg-emerald-500 h-1 transition-all duration-500" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <div id="menuDrawer" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs hidden transition-opacity duration-300" onclick="toggleMenu()">
+        <div class="absolute right-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-800 p-5 shadow-2xl flex flex-col justify-between" onclick="event.stopPropagation()">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b dark:border-slate-700 pb-3">
+                    <h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">⚙️ เมนูจัดการระบบ</h2>
+                    <button onclick="toggleMenu()" class="text-slate-400 hover:text-slate-600 text-base">✕</button>
+                </div>
+                <div class="space-y-2">
+                    <button onclick="fetchFromSheetsAndSyncFirebase(); toggleMenu();" class="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition"><span>🔄</span> อัปเดตรายการสินค้าจาก Sheets</button>
+                    <button onclick="submitToGoogleSheets(); toggleMenu();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-sm transition"><span>📤</span> ยืนยันส่งข้อมูลเข้าระบบ (เขียนทับ)</button>
+                    <button onclick="openBackupModal(); toggleMenu();" class="w-full bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-800 dark:text-indigo-300 border border-indigo-200 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition"><span>📋</span> คัดลอกข้อมูลสำรอง (กรณี Error)</button>
+                    <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 p-3 rounded-xl text-xs font-medium flex items-center gap-2.5 transition"><span>🌅</span> เริ่มรอบวันใหม่ (รีเซ็ตการนับ)</button>
+                </div>
+            </div>
+            <div class="text-[11px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">OH STOCK OJ016 v2.14</div>
+        </div>
+    </div>
+
+    <div id="backupModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 animate-pop space-y-3" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">📋 ข้อมูลสำรอง (กรณีส่งระบบไม่ได้)</span>
+                <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">คุณสามารถกดปุ่มด้านล่างเพื่อคัดลอกข้อความผลการนับทั้งหมด ไปวางสำรองใน Notepad หรือส่งเข้า LINE ได้ทันทีครับ</p>
+            <textarea id="backupTextArea" readonly class="w-full h-48 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] font-mono text-slate-700 dark:text-slate-300 outline-none resize-none"></textarea>
+            <div class="flex gap-2 pt-1">
+                <button onclick="copyBackupText()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-sm transition active:scale-95 flex items-center justify-center gap-1.5"><span>📋</span> คัดลอกข้อความทั้งหมด</button>
+                <button onclick="closeBackupModal()" class="px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cuteModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-2xl max-w-xs w-full text-center space-y-4 border border-slate-100 dark:border-slate-700 animate-pop relative overflow-hidden">
+            <div class="absolute -top-12 -left-12 w-28 h-28 bg-emerald-400/20 rounded-full blur-xl pointer-events-none"></div>
+            <div class="absolute -top-12 -right-12 w-28 h-28 bg-indigo-400/20 rounded-full blur-xl pointer-events-none"></div>
+            <div class="pt-2">
+                <div id="modalIconContainer" class="w-16 h-16 mx-auto bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-emerald-100">
+                    <span id="modalIcon" class="inline-block">✨</span>
+                </div>
+            </div>
+            <div class="space-y-2 px-1">
+                <h3 id="modalTitle" class="font-bold text-base text-slate-800 dark:text-slate-100 tracking-wide">แจ้งเตือน</h3>
+                <p id="modalMessage" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">ข้อความรายละเอียด...</p>
+            </div>
+            <div id="modalActions" class="flex gap-2 pt-2">
+                <button id="modalBtnOk" onclick="closeCuteModal()" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-md active:scale-95">ตกลง</button>
+                <button id="modalBtnCancel" onclick="closeCuteModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition hidden active:scale-95">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="calcModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-2xl max-w-xs w-full border border-slate-200 dark:border-slate-700 animate-pop space-y-3" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">🧮 เครื่องคิดเลขช่วยนับ</span>
+                <button onclick="closeCalculator()" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+            </div>
+            <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl text-right border border-slate-200 dark:border-slate-800">
+                <div id="calcExpression" class="text-[10px] text-slate-400 h-4 overflow-hidden font-mono">0</div>
+                <div id="calcDisplay" class="text-xl font-bold font-mono text-slate-800 dark:text-emerald-400 overflow-x-auto">0</div>
+            </div>
+            <div class="grid grid-cols-4 gap-1.5 text-xs font-semibold">
+                <button onclick="calcInput('C')" class="col-span-2 bg-rose-100 dark:bg-rose-950/60 text-rose-600 p-2.5 rounded-lg active:scale-95 transition">C</button>
+                <button onclick="calcInput('DEL')" class="bg-amber-100 dark:bg-amber-950/60 text-amber-700 p-2.5 rounded-lg active:scale-95 transition">⌫</button>
+                <button onclick="calcInput('/')" class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 p-2.5 rounded-lg active:scale-95 transition">÷</button>
+                <button onclick="calcInput('7')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">7</button>
+                <button onclick="calcInput('8')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">8</button>
+                <button onclick="calcInput('9')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">9</button>
+                <button onclick="calcInput('*')" class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 p-2.5 rounded-lg active:scale-95 transition">×</button>
+                <button onclick="calcInput('4')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">4</button>
+                <button onclick="calcInput('5')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">5</button>
+                <button onclick="calcInput('6')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">6</button>
+                <button onclick="calcInput('-')" class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 p-2.5 rounded-lg active:scale-95 transition">-</button>
+                <button onclick="calcInput('1')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">1</button>
+                <button onclick="calcInput('2')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">2</button>
+                <button onclick="calcInput('3')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">3</button>
+                <button onclick="calcInput('+')" class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 p-2.5 rounded-lg active:scale-95 transition">+</button>
+                <button onclick="calcInput('0')" class="col-span-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">0</button>
+                <button onclick="calcInput('.')" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100 p-2.5 rounded-lg active:scale-95 transition">.</button>
+                <button onclick="calcInput('=')" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2.5 rounded-lg active:scale-95 transition">=</button>
+            </div>
+            <button onclick="applyCalculatorResult()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-sm transition">✓ ใช้ยอดนี้</button>
+        </div>
+    </div>
+
+    <main class="max-w-3xl mx-auto p-3 space-y-2.5">
+        <div id="stockList" class="space-y-2.5"></div>
+    </main>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -34,14 +238,11 @@
             const savedTheme = localStorage.getItem('oh_stock_theme') || 'light';
             const html = document.documentElement;
             const icon = document.getElementById('themeIcon');
-
             if (savedTheme === 'dark') {
-                html.classList.remove('light');
-                html.classList.add('dark');
+                html.classList.remove('light'); html.classList.add('dark');
                 if (icon) icon.innerText = "☀️";
             } else {
-                html.classList.remove('dark');
-                html.classList.add('light');
+                html.classList.remove('dark'); html.classList.add('light');
                 if (icon) icon.innerText = "🌙";
             }
         }
@@ -62,7 +263,6 @@
 
         let lastScrollY = window.scrollY;
         const mainHeader = document.getElementById('mainHeader');
-
         window.addEventListener('scroll', () => {
             const currentScrollY = window.scrollY;
             if (currentScrollY > 60 && currentScrollY > lastScrollY) {
@@ -77,24 +277,22 @@
             const modal = document.getElementById('cuteModal');
             const iconEl = document.getElementById('modalIcon');
             const iconContainer = document.getElementById('modalIconContainer');
-            
             iconEl.innerText = icon;
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalMessage').innerText = message;
             
             iconContainer.className = "w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl shadow-inner border";
             if (icon === '🎉' || icon === '✨') {
-                iconContainer.className += " bg-emerald-50 dark:bg-emerald-950/60 border-emerald-100 dark:border-emerald-800/50 animate-float text-emerald-500";
+                iconContainer.className += " bg-emerald-50 dark:bg-emerald-950/60 border-emerald-100 animate-float text-emerald-500";
             } else if (icon === '❌') {
-                iconContainer.className += " bg-rose-50 dark:bg-rose-950/60 border-rose-100 dark:border-rose-800/50 animate-float text-rose-500";
+                iconContainer.className += " bg-rose-50 dark:bg-rose-950/60 border-rose-100 animate-float text-rose-500";
             } else {
-                iconContainer.className += " bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-600";
+                iconContainer.className += " bg-slate-50 dark:bg-slate-900 border-slate-100 text-slate-600";
             }
 
             const actionsContainer = document.getElementById('modalActions');
             const btnCancel = document.getElementById('modalBtnCancel');
             const btnOk = document.getElementById('modalBtnOk');
-
             actionsContainer.classList.remove('hidden');
 
             if (showCancel) {
@@ -105,11 +303,7 @@
                 btnOk.innerText = "ตกลง";
             }
 
-            btnOk.onclick = () => {
-                closeCuteModal();
-                if (onConfirm) onConfirm();
-            };
-
+            btnOk.onclick = () => { closeCuteModal(); if (onConfirm) onConfirm(); };
             modal.classList.remove('hidden');
         };
 
@@ -117,22 +311,15 @@
             const modal = document.getElementById('cuteModal');
             const iconEl = document.getElementById('modalIcon');
             const iconContainer = document.getElementById('modalIconContainer');
-            
             iconEl.innerText = '⏳';
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalMessage').innerText = message;
-            
-            iconContainer.className = "w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl shadow-inner border bg-amber-50 dark:bg-amber-950/60 border-amber-100 dark:border-amber-800/50 animate-spin-slow text-amber-500";
-
-            const actionsContainer = document.getElementById('modalActions');
-            actionsContainer.classList.add('hidden');
-
+            iconContainer.className = "w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl shadow-inner border bg-amber-50 dark:bg-amber-950/60 border-amber-100 animate-spin-slow text-amber-500";
+            document.getElementById('modalActions').classList.add('hidden');
             modal.classList.remove('hidden');
         };
 
-        window.closeCuteModal = function() {
-            document.getElementById('cuteModal').classList.add('hidden');
-        };
+        window.closeCuteModal = function() { document.getElementById('cuteModal').classList.add('hidden'); };
 
         window.openBackupModal = function() {
             let textOutput = `=== รายงานผลการนับสต็อก (${currentMode.toUpperCase()}) ===\n`;
@@ -145,30 +332,26 @@
                 let f2 = parseFloat(item.today?.frac2) || 0;
                 let finalF2 = f2 - (item.tare || 0);
                 if (finalF2 < 0) finalF2 = 0;
-                const totalFrac = Math.round((f1 + finalF2) * 100) / 100;
 
                 textOutput += `${idx + 1}. [${item.id}] ${item.name}\n`;
                 textOutput += `   - หมวดหมู่: ${item.category || 'ทั่วไป'}\n`;
                 textOutput += `   - จำนวนเต็ม: ${fFull}\n`;
-                textOutput += `   - เศษรวม (ช่องแรก + ตัดกระปุก): ${totalFrac}\n`;
+                textOutput += `   - เศษปกติ: ${f1}\n`;
+                textOutput += `   - เศษตัดกระปุก: ${finalF2} (ดิบ: ${f2}, หักกระปุก: ${item.tare || 0})\n`;
                 textOutput += `-------------------------------------------\n`;
             });
-
             document.getElementById('backupTextArea').value = textOutput;
             document.getElementById('backupModal').classList.remove('hidden');
         };
 
-        window.closeBackupModal = function() {
-            document.getElementById('backupModal').classList.add('hidden');
-        };
+        window.closeBackupModal = function() { document.getElementById('backupModal').classList.add('hidden'); };
 
         window.copyBackupText = function() {
             const textarea = document.getElementById('backupTextArea');
             textarea.select();
-            textarea.setSelectionRange(0, 99999);
             try {
                 navigator.clipboard.writeText(textarea.value);
-                showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ!', message: 'คัดลอกข้อมูลทั้งหมดลงคลิปบอร์ดแล้ว สามารถนำไปวางใน LINE หรือ Notepad ได้เลยค่ะ' });
+                showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ!', message: 'คัดลอกข้อมูลลงคลิปบอร์ดแล้วค่ะ' });
             } catch (err) {
                 document.execCommand('copy');
                 showCuteModal({ icon: '🎉', title: 'คัดลอกสำเร็จ!', message: 'คัดลอกข้อมูลเรียบร้อยแล้วค่ะ' });
@@ -184,9 +367,7 @@
             document.getElementById('calcModal').classList.remove('hidden');
         };
 
-        window.closeCalculator = function() {
-            document.getElementById('calcModal').classList.add('hidden');
-        };
+        window.closeCalculator = function() { document.getElementById('calcModal').classList.add('hidden'); };
 
         function updateCalcDisplay() {
             document.getElementById('calcDisplay').innerText = calcVal || "0";
@@ -194,35 +375,19 @@
         }
 
         window.calcInput = function(key) {
-            if (key === 'C') {
-                calcVal = "0";
-                calcExpr = "";
-            } else if (key === 'DEL') {
-                if (calcVal.length > 1) {
-                    calcVal = calcVal.slice(0, -1);
-                } else {
-                    calcVal = "0";
-                }
-            } else if (['+', '-', '*', '/'].includes(key)) {
-                calcExpr = calcVal + " " + key + " ";
-                calcVal = "0";
-            } else if (key === '=') {
+            if (key === 'C') { calcVal = "0"; calcExpr = ""; }
+            else if (key === 'DEL') { calcVal = calcVal.length > 1 ? calcVal.slice(0, -1) : "0"; }
+            else if (['+', '-', '*', '/'].includes(key)) { calcExpr = calcVal + " " + key + " "; calcVal = "0"; }
+            else if (key === '=') {
                 if (calcExpr) {
                     try {
-                        const fullExpr = calcExpr + calcVal;
-                        const result = Function(`'use strict'; return (${fullExpr})`)();
+                        const result = Function(`'use strict'; return (${calcExpr + calcVal})`)();
                         calcVal = (Math.round(result * 100) / 100).toString();
                         calcExpr = "";
-                    } catch (e) {
-                        calcVal = "Error";
-                    }
+                    } catch (e) { calcVal = "Error"; }
                 }
             } else {
-                if (calcVal === "0" || calcVal === "Error") {
-                    calcVal = key;
-                } else {
-                    calcVal += key;
-                }
+                calcVal = (calcVal === "0" || calcVal === "Error") ? key : calcVal + key;
             }
             updateCalcDisplay();
         };
@@ -247,30 +412,23 @@
                 renderCategories();
                 renderList();
                 setTimeout(() => { isSyncingFromFirebase = false; }, 300);
-            }, (error) => {
-                console.error("Firebase Read Error:", error);
             });
         }
 
         window.fetchFromSheetsAndSyncFirebase = function(isInitial = false) {
             const doFetch = async () => {
-                showLoadingModal({ title: 'กำลังโหลดข้อมูล', message: 'กำลังดึงรายการสินค้าล่าสุดจาก Google Sheets รอสักครู่นะคะ...' });
+                showLoadingModal({ title: 'กำลังโหลดข้อมูล', message: 'กำลังดึงรายการสินค้าจาก Google Sheets...' });
                 try {
                     const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
                     const rawData = await response.json();
-
                     if (Array.isArray(rawData) && rawData.length > 0) {
                         const oldItemsMap = new Map();
                         if (stockItems && stockItems.length > 0) {
-                            stockItems.forEach(item => {
-                                if (item.id) oldItemsMap.set(item.id.toString().trim(), item);
-                            });
+                            stockItems.forEach(item => { if (item.id) oldItemsMap.set(item.id.toString().trim(), item); });
                         }
-
                         const formattedData = rawData.map(item => {
                             const itemId = item.id ? item.id.toString().trim() : "";
                             const existingItem = oldItemsMap.get(itemId);
-
                             return {
                                 id: itemId,
                                 name: item.name || "",
@@ -278,34 +436,20 @@
                                 unit: item.unit || "หน่วย",
                                 count_type: item.count_type ? item.count_type.toString().trim().toLowerCase() : 'both',
                                 tare: parseFloat(item.tare) || 0,
-                                yst: existingItem ? existingItem.yst : { 
-                                    full: parseFloat(item.yst?.full) || 0, 
-                                    frac: parseFloat(item.yst?.frac) || 0 
-                                },
+                                yst: existingItem ? existingItem.yst : { full: parseFloat(item.yst?.full) || 0, frac: parseFloat(item.yst?.frac) || 0 },
                                 today: existingItem ? existingItem.today : { full: "", frac1: "", frac2: "" }
                             };
                         });
-                        
                         await set(ref(db, `stock_${currentMode}`), formattedData);
-                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'อัปเดตรายการสินค้าเข้าสู่ระบบเรียบร้อยแล้วค่ะ' });
+                        showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'อัปเดตรายการสินค้าเรียบร้อยแล้วค่ะ' });
                     }
                 } catch (err) {
-                    console.error(err);
-                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheets ได้ กรุณาลองใหม่อีกครั้งนะคะ' });
+                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Sheets ได้' });
                 }
             };
-
             if (!isInitial) {
-                showCuteModal({
-                    icon: '🔄',
-                    title: 'ยืนยันการอัปเดต',
-                    message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่ไหมคะ? (ยอดที่พนักงานนับค้างไว้จะไม่หายไปค่ะ)',
-                    showCancel: true,
-                    onConfirm: doFetch
-                });
-            } else {
-                doFetch();
-            }
+                showCuteModal({ icon: '🔄', title: 'ยืนยันการอัปเดต', message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่ไหมคะ?', showCancel: true, onConfirm: doFetch });
+            } else { doFetch(); }
         };
 
         window.switchMode = function(mode) {
@@ -321,9 +465,9 @@
             ['all', 'pending', 'done'].forEach(f => {
                 const btn = document.getElementById(`filter${f.charAt(0).toUpperCase() + f.slice(1)}`);
                 if (f === filter) {
-                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-medium";
+                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 font-medium";
                 } else {
-                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+                    btn.className = "flex-1 py-1 text-[11px] rounded-lg border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200";
                 }
             });
             renderList();
@@ -331,26 +475,15 @@
 
         function getStatusType(item) {
             if (!item || !item.today) return 'empty';
-            const f = item.today.full;
-            const f1 = item.today.frac1;
-            const f2 = item.today.frac2;
-            let type = item.count_type || 'both';
-
+            const f = item.today.full, f1 = item.today.frac1, f2 = item.today.frac2, type = item.count_type || 'both';
             const hasFull = f !== "" && f !== null && f !== undefined;
             const hasFrac1 = f1 !== "" && f1 !== null && f1 !== undefined;
             const hasFrac2 = f2 !== "" && f2 !== null && f2 !== undefined;
-            const hasAnyInput = hasFull || hasFrac1 || hasFrac2;
-
-            if (!hasAnyInput) return 'empty'; 
-
+            if (!hasFull && !hasFrac1 && !hasFrac2) return 'empty';
             if (type === 'full') return hasFull ? 'done' : 'incomplete';
             if (type === 'frac') return hasFrac1 ? 'done' : 'incomplete';
             if (type === 'frac2') return (hasFrac1 && hasFrac2) ? 'done' : 'incomplete';
-            
-            if (type === 'both') {
-                if (hasFull && (hasFrac1 || hasFrac2)) return 'done';
-                return 'incomplete';
-            }
+            if (type === 'both') return (hasFull && (hasFrac1 || hasFrac2)) ? 'done' : 'incomplete';
             return 'incomplete';
         }
 
@@ -358,17 +491,12 @@
             if (stockItems.length === 0) return;
             const total = stockItems.length;
             const completed = stockItems.filter(i => getStatusType(i) === 'done').length;
-            const pending = total - completed;
             const percent = Math.round((completed / total) * 100);
-
             document.getElementById("progressBar").style.width = `${percent}%`;
             document.getElementById("countDone").innerText = completed;
             document.getElementById("countTotal").innerText = total;
-            document.getElementById("countPending").innerText = pending;
-
-            if (percent === 100 && lastCompletedCount < total) {
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }
+            document.getElementById("countPending").innerText = total - completed;
+            if (percent === 100 && lastCompletedCount < total) { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
             lastCompletedCount = completed;
         }
 
@@ -376,11 +504,9 @@
             const container = document.getElementById("categoryContainer");
             if (!container) return;
             container.innerHTML = "";
-            const categories = ["ทั้งหมด", ...new Set(stockItems.map(i => i.category || "ทั่วไป"))];
-
-            categories.forEach(cat => {
+            ["ทั้งหมด", ...new Set(stockItems.map(i => i.category || "ทั่วไป"))].forEach(cat => {
                 const btn = document.createElement("button");
-                btn.className = `px-2.5 py-1 rounded-lg border text-[11px] whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`;
+                btn.className = `px-2.5 py-1 rounded-lg border text-[11px] whitespace-nowrap transition ${selectedCategory === cat ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 font-medium' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200'}`;
                 btn.innerText = cat;
                 btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); };
                 container.appendChild(btn);
@@ -389,18 +515,15 @@
 
         window.renderList = function() {
             if (isSyncingFromFirebase && document.activeElement && document.activeElement.tagName === 'INPUT') return;
-            
             const container = document.getElementById("stockList");
             if (!container) return;
             container.innerHTML = "";
             const searchVal = document.getElementById("searchInput")?.value.toLowerCase() || "";
 
             let items = stockItems.filter(item => {
-                const itemCat = item.category || "ทั่วไป";
-                const matchCategory = selectedCategory === 'ทั้งหมด' || itemCat === selectedCategory;
+                const matchCategory = selectedCategory === 'ทั้งหมด' || (item.category || "ทั่วไป") === selectedCategory;
                 const matchSearch = (item.id || "").toLowerCase().includes(searchVal) || (item.name || "").toLowerCase().includes(searchVal);
                 if (!matchCategory || !matchSearch) return false;
-                
                 const status = getStatusType(item);
                 if (currentFilter === 'pending') return status === 'empty' || status === 'incomplete';
                 if (currentFilter === 'done') return status === 'done';
@@ -417,105 +540,81 @@
             items.forEach((item) => {
                 const originalIdx = stockItems.indexOf(item);
                 let cleanType = item.count_type || 'both';
-                
                 const fFullVal = item.today?.full !== "" && item.today?.full !== null ? item.today?.full : 0;
                 const f1Val = parseFloat(item.today?.frac1) || 0;
-                
                 let f2Val = parseFloat(item.today?.frac2) || 0;
-                let finalFrac2 = f2Val - (item.tare || 0);
-                if (finalFrac2 < 0) finalFrac2 = 0;
-
+                let finalFrac2 = Math.max(0, f2Val - (item.tare || 0));
                 const totalFrac = Math.round((f1Val + finalFrac2) * 100) / 100;
                 const status = getStatusType(item);
-
                 const isNeedTare = cleanType === 'frac2' || (item.tare && item.tare > 0);
-
-                const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && 
-                                  (item.today?.frac1 === 0 || item.today?.frac1 === "0") && 
-                                  (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
+                const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && (item.today?.frac1 === 0 || item.today?.frac1 === "0") && (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
 
                 let cardBg = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
-                let badgeClass = 'text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600';
+                let badgeClass = 'text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-300';
                 let badgeText = '⏳ รอนับ';
 
                 if (status === 'incomplete') {
-                    cardBg = 'bg-amber-50/70 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-500';
-                    badgeClass = 'text-white bg-amber-500 border border-amber-600 font-bold shadow-xs';
+                    cardBg = 'bg-amber-50/70 dark:bg-amber-950/40 border-2 border-amber-400';
+                    badgeClass = 'text-white bg-amber-50 border border-amber-600 font-bold shadow-xs';
                     badgeText = '⏳ ไม่ครบ';
                 } else if (status === 'done') {
-                    cardBg = 'bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500 dark:border-emerald-500';
+                    cardBg = 'bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500';
                     badgeClass = 'text-white bg-emerald-600 border border-emerald-700 font-bold shadow-xs';
                     badgeText = '✅ นับเสร็จแล้ว';
                 }
 
                 let typeLabel = isNeedTare ? "นับเศษ (ตัดกระปุก)" : (cleanType === 'frac' ? "นับเศษ" : "นับเต็มและเศษ");
-
                 const card = document.createElement("div");
                 card.id = `card_${originalIdx}`;
                 card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm ${cardBg}`;
-                
                 const gridClass = isNeedTare ? "grid-cols-3" : "grid-cols-2";
-
-                const inputStyle = "stock-input w-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-bold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner transition";
+                const inputStyle = "stock-input w-full border-2 border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 font-bold text-sm sm:text-base rounded-lg p-1.5 text-center focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner transition";
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2 mb-2">
                         <div>
                             <div class="flex items-center gap-1 flex-wrap">
                                 <span class="font-mono text-[10px] text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded font-medium">${item.id}</span>
-                                <span class="text-[9px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">📌 ${typeLabel}</span>
-                                ${item.tare > 0 ? `<span class="text-[9px] text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-800">✂️ -${item.tare}</span>` : ''}
-                                <span class="text-[9px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-1.5 py-0.5 rounded">${item.category || 'ทั่วไป'}</span>
+                                <span class="text-[9px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded border">📌 ${typeLabel}</span>
+                                ${item.tare > 0 ? `<span class="text-[9px] text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border">✂️ -${item.tare}</span>` : ''}
+                                <span class="text-[9px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${item.category || 'ทั่วไป'}</span>
                             </div>
                             <h2 class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mt-1 leading-snug">${item.name}</h2>
                         </div>
-                        <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1">
-                            ${badgeText}
-                        </span>
+                        <span id="badge_${originalIdx}" class="${badgeClass} text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1">${badgeText}</span>
                     </div>
-
                     <div class="input-group-wrapper ${isZeroAll ? 'sold-out' : ''}">
                         <div class="grid ${gridClass} gap-2 mb-2">
                             <div>
                                 <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300 block mb-0.5">จำนวนเต็ม</span>
                                 <input type="number" id="input_${originalIdx}_full" value="${item.today?.full ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'full', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'full')" class="${inputStyle}" placeholder="0">
                             </div>
-                            
                             <div class="relative">
                                 <div class="flex justify-between items-center mb-0.5">
                                     <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">${isNeedTare ? 'เศษปกติ' : 'เศษ'}</span>
-                                    <button onclick="openCalculator(${originalIdx}, 'frac1')" class="text-[10px] hover:scale-110 active:scale-95 transition" title="คำนวณเศษ">🧮</button>
+                                    <button onclick="openCalculator(${originalIdx}, 'frac1')" class="text-[10px] hover:scale-110 active:scale-95 transition">🧮</button>
                                 </div>
                                 <input type="number" id="input_${originalIdx}_frac1" value="${item.today?.frac1 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac1', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac1')" class="${inputStyle}" placeholder="0">
                             </div>
-
                             ${isNeedTare ? `
                             <div class="relative">
                                 <div class="flex justify-between items-center mb-0.5">
                                     <span class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">เศษกระปุก</span>
-                                    <button onclick="openCalculator(${originalIdx}, 'frac2')" class="text-[10px] hover:scale-110 active:scale-95 transition" title="คำนวณเศษกระปุก">🧮</button>
+                                    <button onclick="openCalculator(${originalIdx}, 'frac2')" class="text-[10px] hover:scale-110 active:scale-95 transition">🧮</button>
                                 </div>
                                 <input type="number" id="input_${originalIdx}_frac2" value="${item.today?.frac2 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac2')" class="${inputStyle}" placeholder="0">
                             </div>
                             ` : ''}
                         </div>
                     </div>
-
                     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 border-t border-slate-200 dark:border-slate-700/60 gap-1.5">
                         <div class="flex gap-1.5 shrink-0">
-                            <button onclick="setAsYst(${originalIdx})" class="flex-1 sm:flex-none bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-medium transition">
-                                ↺ ยอดเมื่อวาน
-                            </button>
-                            <button onclick="setAsZero(${originalIdx})" class="flex-1 sm:flex-none bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded text-[10px] font-medium transition">
-                                ✕ ของหมด (0)
-                            </button>
+                            <button onclick="setAsYst(${originalIdx})" class="flex-1 sm:flex-none bg-slate-100 hover:bg-slate-200 text-slate-700 border px-2 py-0.5 rounded text-[10px] font-medium transition">↺ ยอดเมื่อวาน</button>
+                            <button onclick="setAsZero(${originalIdx})" class="flex-1 sm:flex-none bg-rose-50 hover:bg-rose-100 text-rose-700 border px-2 py-0.5 rounded text-[10px] font-medium transition">✕ ของหมด (0)</button>
                         </div>
-                        
                         <div class="flex items-center justify-between sm:justify-end gap-2 text-[10px] flex-wrap">
-                            <span class="text-slate-500 dark:text-slate-400 font-mono text-[9px]">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
-                            <span id="summary_${originalIdx}" class="text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 font-mono text-[10px]">
-                                ( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )
-                            </span>
+                            <span class="text-slate-500 font-mono text-[9px]">เมื่อวาน: เต็ม ${item.yst?.full ?? 0} | เศษ ${item.yst?.frac ?? 0}</span>
+                            <span id="summary_${originalIdx}" class="text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-100 px-2 py-0.5 rounded border font-mono text-[10px]">( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )</span>
                         </div>
                     </div>
                 `;
@@ -527,48 +626,35 @@
             if (event.key === 'Enter') {
                 event.preventDefault();
                 updateFirebaseInput(idx, field, event.target.value);
-
                 const inputs = Array.from(document.querySelectorAll('.stock-input'));
                 const currentIndex = inputs.indexOf(event.target);
-
                 if (currentIndex !== -1 && currentIndex + 1 < inputs.length) {
                     inputs[currentIndex + 1].focus();
                     inputs[currentIndex + 1].select();
-                } else {
-                    event.target.blur();
-                }
+                } else { event.target.blur(); }
             }
         };
 
         window.updateFirebaseInput = function(idx, field, val) {
-            if (stockItems[idx] && stockItems[idx].today) {
-                stockItems[idx].today[field] = val;
-            }
-            
+            if (stockItems[idx] && stockItems[idx].today) { stockItems[idx].today[field] = val; }
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today/${field}`] = val;
             update(ref(db), updates);
-
             updateCardUI(idx);
         };
 
         function updateCardUI(idx) {
             const item = stockItems[idx];
             if (!item) return;
-
             let cleanType = item.count_type || 'both';
             const fFullVal = item.today?.full !== "" && item.today?.full !== null ? item.today?.full : 0;
             const f1Val = parseFloat(item.today?.frac1) || 0;
             let f2Val = parseFloat(item.today?.frac2) || 0;
-            let finalFrac2 = f2Val - (item.tare || 0);
-            if (finalFrac2 < 0) finalFrac2 = 0;
+            let finalFrac2 = Math.max(0, f2Val - (item.tare || 0));
             const totalFrac = Math.round((f1Val + finalFrac2) * 100) / 100;
             const status = getStatusType(item);
             const isNeedTare = cleanType === 'frac2' || (item.tare && item.tare > 0);
-
-            const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && 
-                              (item.today?.frac1 === 0 || item.today?.frac1 === "0") && 
-                              (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
+            const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && (item.today?.frac1 === 0 || item.today?.frac1 === "0") && (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
 
             const card = document.getElementById(`card_${idx}`);
             const badge = document.getElementById(`badge_${idx}`);
@@ -576,86 +662,64 @@
             const inputGroupWrapper = card ? card.querySelector('.input-group-wrapper') : null;
 
             if (inputGroupWrapper) {
-                if (isZeroAll) {
-                    inputGroupWrapper.classList.add('sold-out');
-                } else {
-                    inputGroupWrapper.classList.remove('sold-out');
-                }
+                if (isZeroAll) inputGroupWrapper.classList.add('sold-out');
+                else inputGroupWrapper.classList.remove('sold-out');
             }
 
             if (card && badge) {
-                card.className = card.className.replace(/bg-(white|amber-50|emerald-50).*/g, '');
                 if (status === 'incomplete') {
-                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-amber-50/70 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-500`;
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-amber-50/70 dark:bg-amber-950/40 border-2 border-amber-400`;
                     badge.className = `text-white bg-amber-500 border border-amber-600 font-bold shadow-xs text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
                     badge.innerText = '⏳ ไม่ครบ';
                 } else if (status === 'done') {
-                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500 dark:border-emerald-500`;
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-emerald-50/80 dark:bg-emerald-950/40 border-2 border-emerald-500`;
                     badge.className = `text-white bg-emerald-600 border border-emerald-700 font-bold shadow-xs text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
                     badge.innerText = '✅ นับเสร็จแล้ว';
                 } else {
-                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700`;
-                    badge.className = `text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
+                    card.className = `p-3 sm:p-3.5 rounded-xl transition duration-200 shadow-sm bg-white dark:bg-slate-800 border-slate-200`;
+                    badge.className = `text-slate-500 bg-slate-100 border border-slate-300 text-[10px] px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1`;
                     badge.innerText = '⏳ รอนับ';
                 }
             }
 
-            if (summary) {
-                summary.innerText = `( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )`;
-            }
-
+            if (summary) { summary.innerText = `( เต็ม: ${fFullVal} | เศษรวม: ${totalFrac} )`; }
             updateProgressAndUI();
         }
 
         window.setAsYst = function(idx) {
             const item = stockItems[idx];
-            item.today = {
-                full: item.yst.full,
-                frac1: item.yst.frac,
-                frac2: 0
-            };
+            item.today = { full: item.yst.full, frac1: item.yst.frac, frac2: 0 };
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today`] = item.today;
             update(ref(db), updates);
-
             const fInput = document.getElementById(`input_${idx}_full`);
             const f1Input = document.getElementById(`input_${idx}_frac1`);
             const f2Input = document.getElementById(`input_${idx}_frac2`);
             if (fInput) fInput.value = item.yst.full;
             if (f1Input) f1Input.value = item.yst.frac;
             if (f2Input) f2Input.value = 0;
-
             updateCardUI(idx);
         };
 
         window.setAsZero = function(idx) {
             const item = stockItems[idx];
             const isCurrentlyZero = item.today?.full === "0" && item.today?.frac1 === "0" && item.today?.frac2 === "0";
-            item.today = {
-                full: isCurrentlyZero ? "" : "0",
-                frac1: isCurrentlyZero ? "" : "0",
-                frac2: isCurrentlyZero ? "" : "0"
-            };
+            item.today = { full: isCurrentlyZero ? "" : "0", frac1: isCurrentlyZero ? "" : "0", frac2: isCurrentlyZero ? "" : "0" };
             const updates = {};
             updates[`stock_${currentMode}/${idx}/today`] = item.today;
             update(ref(db), updates);
-
             const fInput = document.getElementById(`input_${idx}_full`);
             const f1Input = document.getElementById(`input_${idx}_frac1`);
             const f2Input = document.getElementById(`input_${idx}_frac2`);
             if (fInput) fInput.value = item.today.full;
             if (f1Input) f1Input.value = item.today.frac1;
             if (f2Input) f2Input.value = item.today.frac2;
-
             updateCardUI(idx);
         };
 
         window.startNewDay = function() {
             showCuteModal({
-                icon: '🌅',
-                title: 'เริ่มรอบวันใหม่',
-                message: 'ต้องการเริ่มรอบวันใหม่ใช่ไหมคะ? (ยอดนับวันนี้จะถูกย้ายเป็นยอดเมื่อวานค่ะ)',
-                showCancel: true,
+                icon: '🌅', title: 'เริ่มรอบวันใหม่', message: 'ต้องการเริ่มรอบวันใหม่ใช่ไหมคะ?', showCancel: true,
                 onConfirm: () => {
                     const newItems = stockItems.map(item => {
                         item.yst.full = item.today?.full !== "" && item.today?.full !== null ? item.today.full : item.yst.full;
@@ -670,54 +734,43 @@
 
         window.submitToGoogleSheets = async function() {
             showCuteModal({
-                icon: '📤',
-                title: 'ยืนยันการส่งข้อมูล',
-                message: 'ต้องการส่งผลการนับทั้งหมดเข้า Google Sheets (เขียนทับชีตผลลัพธ์) ใช่ไหมคะ?',
-                showCancel: true,
+                icon: '📤', title: 'ยืนยันการส่งข้อมูล', message: 'ต้องการส่งผลการนับทั้งหมดเข้า Google Sheets แบบแยกช่องเศษใช่ไหมคะ?', showCancel: true,
                 onConfirm: async () => {
-                    showLoadingModal({ title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets รอสักครู่นะคะ...' });
+                    showLoadingModal({ title: 'กำลังส่งข้อมูล', message: 'กำลังบันทึกข้อมูลลง Google Sheets...' });
                     try {
-                        // ประมวลผลรวมยอดเศษ (frac1 + เศษหลังหัก tare ของ frac2) ก่อนส่งออก
                         const processedItems = stockItems.map(item => {
                             const f1 = parseFloat(item.today?.frac1) || 0;
                             let f2 = parseFloat(item.today?.frac2) || 0;
-                            let finalF2 = f2 - (item.tare || 0);
-                            if (finalF2 < 0) finalF2 = 0;
-                            const totalFrac = Math.round((f1 + finalF2) * 100) / 100;
-
-                            return {
-                                ...item,
-                                today: {
-                                    ...item.today,
-                                    frac: totalFrac // ส่งค่าเศษรวมสมบูรณ์เข้าฟิลด์ frac หลัก
-                                }
+                            let finalF2 = Math.max(0, f2 - (item.tare || 0));
+                            
+                            return { 
+                                ...item, 
+                                today: { 
+                                    ...item.today, 
+                                    frac_normal: f1,       // ส่งช่องเศษปกติแยกไป
+                                    frac_tare_net: finalF2, // ส่งช่องเศษหลังหักกระปุกแยกไป
+                                    frac: f1 + finalF2     // เผื่อช่องรวมเดิมด้วย
+                                } 
                             };
                         });
 
-                        const response = await fetch(WEB_APP_URL, {
+                        await fetch(WEB_APP_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ mode: currentMode, items: processedItems })
                         });
-                        
                         showCuteModal({ icon: '🎉', title: 'สำเร็จ!', message: 'ส่งข้อมูลเข้าระบบ Google Sheets เรียบร้อยแล้วค่ะ' });
                     } catch (error) {
-                        console.error(error);
-                        showCuteModal({ 
-                            icon: '❌', 
-                            title: 'เกิดข้อผิดพลาด (Error)', 
-                            message: 'ไม่สามารถส่งข้อมูลได้ คุณสามารถเปิดเมนูแล้วกด "คัดลอกข้อมูลสำรอง" เพื่อก๊อปปี้ข้อมูลเก็บไว้ได้ทันทีค่ะ' 
-                        });
+                        showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถส่งข้อมูลได้ กรุณาใช้ปุ่มคัดลอกข้อมูลสำรอง' });
                     }
                 }
             });
         };
 
-        window.toggleMenu = function() {
-            const drawer = document.getElementById('menuDrawer');
-            drawer.classList.toggle('hidden');
-        };
+        window.toggleMenu = function() { document.getElementById('menuDrawer').classList.toggle('hidden'); };
 
         initTheme();
         listenToFirebase();
     </script>
+</body>
+</html>
