@@ -126,7 +126,7 @@
                     <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 p-2.5 rounded-lg font-medium flex items-center gap-2.5 transition"><span>🌅</span> เริ่มรอบวันใหม่</button>
                 </div>
             </div>
-            <div class="text-[10px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">OH STOCK OJ016 v2.16</div>
+            <div class="text-[10px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">OH STOCK OJ016 v2.17</div>
         </div>
     </div>
 
@@ -535,13 +535,15 @@
                 const fFullVal = item.today?.full !== "" && item.today?.full !== null ? item.today?.full : 0;
                 const f1Val = parseFloat(item.today?.frac1) || 0;
                 let f2Val = parseFloat(item.today?.frac2) || 0;
-                let finalFrac2 = Math.max(0, f2Val - (item.tare || 0));
-                const totalFrac = Math.round((f1Val + finalFrac2) * 100) / 100;
+                
+                // คำนวณหักกระปุกตรงนี้ (ถ้าติดลบให้แสดงเป็น 0)
+                let finalFrac2 = f2Val - (item.tare || 0);
+                if (finalFrac2 < 0) finalFrac2 = 0;
+
                 const status = getStatusType(item);
                 const isNeedTare = cleanType === 'frac2' || (item.tare && item.tare > 0);
                 const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && (item.today?.frac1 === 0 || item.today?.frac1 === "0") && (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
 
-                // รองรับยอดเมื่อวานทั้ง เศษ 1 และ เศษ 2
                 const ystFull = item.yst?.full ?? 0;
                 const ystFrac1 = item.yst?.frac1 !== undefined ? item.yst.frac1 : (item.yst?.frac ?? 0);
                 const ystFrac2 = item.yst?.frac2 ?? 0;
@@ -596,7 +598,7 @@
                             ${isNeedTare ? `
                             <div class="relative">
                                 <div class="flex justify-between items-center mb-1">
-                                    <span class="text-[10px] text-slate-500 dark:text-slate-400">เศษ 2</span>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400">เศษ 2 (หักกระปุก)</span>
                                     <button onclick="openCalculator(${originalIdx}, 'frac2')" class="text-[11px] hover:scale-110 active:scale-95 transition text-slate-400 hover:text-slate-600">🧮</button>
                                 </div>
                                 <input type="number" id="input_${originalIdx}_frac2" value="${item.today?.frac2 ?? ''}" onblur="updateFirebaseInput(${originalIdx}, 'frac2', this.value)" onkeydown="handleInputKeydown(event, ${originalIdx}, 'frac2')" class="${inputStyle}" placeholder="0">
@@ -611,7 +613,7 @@
                         </div>
                         <div class="flex items-center justify-between sm:justify-end gap-2 text-[10px] flex-wrap">
                             <span class="text-slate-400 font-mono text-[9px]">เมื่อวาน: เต็ม ${ystFull} | เศษ1: ${ystFrac1} | เศษ2: ${ystFrac2}</span>
-                            <span id="summary_${originalIdx}" class="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-900 font-mono text-[10px] font-medium">( เต็มวันนี้: ${fFullVal} | วันเศษ 1: ${f1Val} | เศษ 2: ${f2Val} )</span>
+                            <span id="summary_${originalIdx}" class="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-900 font-mono text-[10px] font-medium">( เต็ม: ${fFullVal} | เศษ 1: ${f1Val} | เศษ 2 (หักกระปุก): ${finalFrac2} )</span>
                         </div>
                     </div>
                 `;
@@ -647,8 +649,10 @@
             const fFullVal = item.today?.full !== "" && item.today?.full !== null ? item.today?.full : 0;
             const f1Val = parseFloat(item.today?.frac1) || 0;
             let f2Val = parseFloat(item.today?.frac2) || 0;
-            let finalFrac2 = Math.max(0, f2Val - (item.tare || 0));
-            const totalFrac = Math.round((f1Val + finalFrac2) * 100) / 100;
+            
+            let finalFrac2 = f2Val - (item.tare || 0);
+            if (finalFrac2 < 0) finalFrac2 = 0;
+
             const status = getStatusType(item);
             const isNeedTare = cleanType === 'frac2' || (item.tare && item.tare > 0);
             const isZeroAll = (item.today?.full === 0 || item.today?.full === "0") && (item.today?.frac1 === 0 || item.today?.frac1 === "0") && (!isNeedTare || item.today?.frac2 === 0 || item.today?.frac2 === "0");
@@ -679,7 +683,7 @@
                 }
             }
 
-            if (summary) { summary.innerText = `( เต็มวันนี้: ${fFullVal} | วันเศษ 1: ${f1Val} | เศษ 2: ${f2Val} )`; }
+            if (summary) { summary.innerText = `( เต็ม: ${fFullVal} | เศษ 1: ${f1Val} | เศษ 2 (หักกระปุก): ${finalFrac2} )`; }
             updateProgressAndUI();
         }
 
@@ -747,7 +751,8 @@
                         const processedItems = stockItems.map(item => {
                             const f1 = parseFloat(item.today?.frac1) || 0;
                             let f2 = parseFloat(item.today?.frac2) || 0;
-                            let finalF2 = Math.max(0, f2 - (item.tare || 0));
+                            let finalF2 = f2 - (item.tare || 0);
+                            if (finalF2 < 0) finalF2 = 0;
                             
                             return { 
                                 ...item, 
