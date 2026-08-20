@@ -126,7 +126,7 @@
                     <button onclick="startNewDay(); toggleMenu();" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 p-2.5 rounded-lg font-medium flex items-center gap-2.5 transition"><span>🌅</span> เริ่มรอบวันใหม่</button>
                 </div>
             </div>
-            <div class="text-[10px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">OH STOCK OJ016 v2.17</div>
+            <div class="text-[10px] text-center text-slate-400 border-t dark:border-slate-700 pt-3">OH STOCK OJ016 v2.18</div>
         </div>
     </div>
 
@@ -216,7 +216,8 @@
             measurementId: "G-LTGJR4QFW5"
         };
 
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-jajYFldXlasI1vTYenZzKI28_Jzh5YIGXd-OFGOxrZ41IOkdBkJSzT2fagnX-Xay/exec";
+        // ลิงก์ Web App ล่าสุดที่อัปเดตแล้ว
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzwraa62HFHFyiad9c43xCwMHE8LKi6FZVT6i_v_Ta05AwsH8SXXS9rWU429fdB7p6u/exec";
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -408,11 +409,11 @@
         }
 
         window.fetchFromSheetsAndSyncFirebase = function(isInitial = false) {
-            const doFetch = async () => {
-                showLoadingModal({ title: 'กำลังซิงค์ข้อมูล', message: 'กำลังดึงรายการสินค้าจาก Google Sheets...' });
-                try {
-                    const response = await fetch(`${WEB_APP_URL}?mode=${currentMode}`);
-                    const rawData = await response.json();
+            showLoadingModal({ title: 'กำลังซิงค์ข้อมูล', message: 'กำลังดึงรายการสินค้าจาก Google Sheets...' });
+            
+            fetch(`${WEB_APP_URL}?mode=${currentMode}`, { method: 'GET', mode: 'cors' })
+                .then(response => response.json())
+                .then(rawData => {
                     if (Array.isArray(rawData) && rawData.length > 0) {
                         const oldItemsMap = new Map();
                         if (stockItems && stockItems.length > 0) {
@@ -432,16 +433,21 @@
                                 today: existingItem ? existingItem.today : { full: "", frac1: "", frac2: "" }
                             };
                         });
-                        await set(ref(db, `stock_${currentMode}`), formattedData);
-                        showCuteModal({ icon: '🎉', title: 'สำเร็จ', message: 'อัปเดตรายการสินค้าเรียบร้อยแล้วครับ' });
+                        set(ref(db, `stock_${currentMode}`), formattedData).then(() => {
+                            closeCuteModal();
+                            showCuteModal({ icon: '🎉', title: 'สำเร็จ', message: 'ดึงข้อมูลจาก Google Sheets สำเร็จแล้วครับ' });
+                        });
+                    } else {
+                        closeCuteModal();
+                        if (!isInitial) showCuteModal({ icon: '✨', title: 'แจ้งเตือน', message: 'ไม่พบรายการข้อมูลใหม่จาก Google Sheets' });
                     }
-                } catch (err) {
-                    showCuteModal({ icon: '❌', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้' });
-                }
-            };
-            if (!isInitial) {
-                showCuteModal({ icon: '🔄', title: 'ยืนยันการดึงข้อมูล', message: 'ต้องการดึงโครงสร้างรายการสินค้าใหม่จาก Google Sheets ใช่ไหมครับ?', showCancel: true, onConfirm: doFetch });
-            } else { doFetch(); }
+                })
+                .catch(err => {
+                    closeCuteModal();
+                    if (!isInitial) {
+                        showCuteModal({ icon: '❌', title: 'เชื่อมต่อไม่สำเร็จ', message: 'ไม่สามารถดึงข้อมูลจาก Sheets ได้ (ตรวจสอบสิทธิ์ลิงก์ Apps Script หรือการ Deploy)' });
+                    }
+                });
         };
 
         window.switchMode = function(mode) {
@@ -536,7 +542,6 @@
                 const f1Val = parseFloat(item.today?.frac1) || 0;
                 let f2Val = parseFloat(item.today?.frac2) || 0;
                 
-                // คำนวณหักกระปุกตรงนี้ (ถ้าติดลบให้แสดงเป็น 0)
                 let finalFrac2 = f2Val - (item.tare || 0);
                 if (finalFrac2 < 0) finalFrac2 = 0;
 
